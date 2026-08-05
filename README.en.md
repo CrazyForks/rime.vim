@@ -3,28 +3,25 @@
 A Chinese input method (Rime / ㄓ) solution for Vim and Neovim, based on the
 [rime-ice](https://github.com/iDvelve/rime-ice) scheme.
 
-> This is an English translation of `README.md`. The original project is
-> [rimeinn/rime.nvim](https://github.com/rimeinn/rime.nvim).
-
 ## Table of Contents
 
 - [Introduction](#introduction)
-- [Quick Start](#quick-start)
+- [Quick Start](#Quick Start)
   - [Requirements](#requirements)
   - [Installation](#installation)
-  - [Building the backend (rime-query)](#building-the-backend-rime-query)
+  - [Building the backend](#Building the backend)
 - [Configuration](#configuration)
   - [Options](#options)
-  - [Environment variables](#environment-variables)
+  - [Environment variables](#Environment variables)
 - [Usage](#usage)
   - [Commands](#commands)
-  - [Key mappings](#key-mappings)
+  - [Key mappings](#Key mappings)
 - [Integration](#integration)
   - [Autocmd](#autocmd)
   - [Statusline](#statusline)
-- [Advanced](#advanced)
-  - [rime-ice configuration examples](#rime-ice-configuration-examples)
-  - [Complementary plugins](#complementary-plugins)
+- [Advanced Topics](#Advanced Topics)
+  - [rime-ice configuration examples](#rime-ice configuration examples)
+  - [Complementary plugins](#Complementary plugins)
 - [Acknowledgments](#acknowledgments)
 - [License](#license)
 
@@ -64,17 +61,17 @@ Key features:
 
 ```vim
 vim.pack.add({
-  "https://github.com/Tsalmon3/rime.vim"
+  "https://github.com/TSalmon3/rime.vim"
 })
 ```
 
 - **vim-plug**
 
 ```vim
-Plug 'Tsalmon3/rime.vim'
+Plug 'TSalmon3/rime.vim'
 ```
 
-### Building the backend (rime-query)
+### Building the backend
 
 The built `rime-query` executable must be findable (searched on `PATH` by
 default; you can point at it via `g:im_rime_bin`), otherwise `:IMStart` will
