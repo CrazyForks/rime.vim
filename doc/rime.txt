@@ -23,16 +23,13 @@ A Chinese input method (Rime / ㄓ) solution for Vim and Neovim, based on the
 rime-ice <https://github.com/iDvelve/rime-ice> scheme.
 
 
-  This is an English translation of `README.md`. The original project is
-  rimeinn/rime.nvim <https://github.com/rimeinn/rime.nvim>.
-
 TABLE OF CONTENTS                            *rime-rime-vim-table-of-contents*
 
 - |rime-introduction|
 - |rime-quick-start|
     - |rime-requirements|
     - |rime-installation|
-    - |rime-building-the-backend-(rime-query)|
+    - |rime-building-the-backend|
 - |rime-configuration|
     - |rime-options|
     - |rime-environment-variables|
@@ -42,7 +39,7 @@ TABLE OF CONTENTS                            *rime-rime-vim-table-of-contents*
 - |rime-integration|
     - |rime-autocmd|
     - |rime-statusline|
-- |rime-advanced|
+- |rime-advanced-topics|
     - |rime-rime-ice-configuration-examples|
     - |rime-complementary-plugins|
 - |rime-acknowledgments|
@@ -84,18 +81,18 @@ INSTALLATION ~
 
 >vim
     vim.pack.add({
-      "https://github.com/Tsalmon3/rime.vim"
+      "https://github.com/TSalmon3/rime.vim"
     })
 <
 
 - **vim-plug**
 
 >vim
-    Plug 'Tsalmon3/rime.vim'
+    Plug 'TSalmon3/rime.vim'
 <
 
 
-BUILDING THE BACKEND (RIME-QUERY) ~
+BUILDING THE BACKEND ~
 
 The built `rime-query` executable must be findable (searched on `PATH` by
 default; you can point at it via `g:im_rime_bin`), otherwise `:IMStart` will
