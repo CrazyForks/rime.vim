@@ -1,0 +1,54 @@
+if exists('g:loaded_im_nvim')
+  finish
+endif
+
+if !has('nvim') && !has('patch-8.2.1978')
+  finish
+endif
+
+let g:loaded_im_nvim = 1
+
+" Rime handles its own candidate lookup; don't let Vim's builtin
+" 'imsearch' get in the way of it.
+" set imsearch=0
+
+call im#rime#init()
+
+command! IMToggle             call im#toggle()
+command! IMStart              call im#start()
+command! IMStop               call im#stop()
+
+
+if !get(g:, 'im_no_default_mappings', 0)
+  let s:toggle_key = get(g:, 'im_toggle_key', ';;')
+  let s:toggle_ascii_punct_key   = get(g:, 'im_toggle_ascii_punct_key', ';a')
+  let s:toggle_traditional_key   = get(g:, 'im_toggle_traditional_key', ';f')
+  let s:toggle_emoji_key   = get(g:, 'im_toggle_emoji_key', ';e')
+  execute 'nnoremap <silent> ' . s:toggle_key . ' <cmd>call im#toggle()<cr>'
+  execute 'inoremap <silent> ' . s:toggle_key . ' <cmd>call im#toggle()<cr><c-^>'
+  execute 'cnoremap <silent> ' . s:toggle_key . ' <cmd>call IMCmdEdit()<cr>'
+  execute 'tnoremap <silent> ' . s:toggle_key . ' <c-\><c-n>q:a:PassToTerm<space>'
+  execute 'inoremap <silent> ' . s:toggle_ascii_punct_key . ' <cmd>call im#rime#toggle_ascii_punct()<cr>'
+  execute 'inoremap <silent> ' . s:toggle_ascii_punct_key . ' <cmd>call im#rime#toggle_ascii_punct()<cr>'
+  execute 'nnoremap <silent> ' . s:toggle_emoji_key . ' <cmd>call im#rime#toggle_emoji()<cr>'
+  execute 'nnoremap <silent> ' . s:toggle_emoji_key . ' <cmd>call im#rime#toggle_emoji()<cr>'
+  execute 'inoremap <silent> ' . s:toggle_traditional_key . ' <cmd>call im#rime#toggle_traditional()<cr>'
+  execute 'nnoremap <silent> ' . s:toggle_traditional_key . ' <cmd>call im#rime#toggle_traditional()<cr>'
+endif
+
+let g:im_underline_disable = get(g:, 'im_underline_disable', 0)
+
+function! IM_Status() abort
+  return im#status()
+endfunction
+
+augroup im_lifecycle
+  autocmd!
+  autocmd VimEnter    * call im#rime#start()
+  autocmd User RimeIMEnable  call im#hooks#on_enable()
+  autocmd User RimeIMDisable call im#hooks#on_disable()
+  " autocmd InsertEnter * call im#on_insert_enter()
+  " autocmd InsertLeave * call im#on_insert_leave()
+augroup END
+
+

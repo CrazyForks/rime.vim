@@ -1,0 +1,27 @@
+cmake_minimum_required(VERSION 3.15)
+project(rime-query CXX)
+
+set(CMAKE_CXX_COMPILER clang++)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_executable(rime-query rime-query.cc)
+
+target_compile_options(rime-query PRIVATE -O2 -Wall)
+target_include_directories(rime-query PRIVATE ${PROJECT_SOURCE_DIR}/3rd)
+
+if(APPLE)
+    target_include_directories(rime-query PRIVATE /opt/homebrew/include)
+    target_link_directories(rime-query PRIVATE /opt/homebrew/lib)
+    # target_link_libraries(rime-query PRIVATE stdc++)
+    target_link_libraries(rime-query PRIVATE rime)
+elseif(WIN32)
+    target_include_directories(rime-query PRIVATE "D:/Library/librime/include")
+    target_link_directories(rime-query PRIVATE "D:/Library/librime/lib")
+    target_link_libraries(rime-query PRIVATE rime)
+elseif(UNIX)
+    target_include_directories(rime-query PRIVATE /usr/include)
+    target_link_directories(rime-query PRIVATE /usr/lib/x86_64-linux-gnu)
+    # target_link_libraries(rime-query PRIVATE stdc++)
+    target_link_libraries(rime-query PRIVATE rime)
+endif()

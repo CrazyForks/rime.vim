@@ -1,0 +1,29 @@
+name: panvimdoc
+
+on:
+  push:
+    paths:
+      - README.en.md
+      - .github/workflows/panvimdoc.yml
+
+permissions:
+  contents: write
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    name: pandoc to vimdoc
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: panvimdoc
+        uses: kdheepak/panvimdoc@main
+        with:
+          vimdoc: rime
+          pandoc: "README.en.md"
+
+      - name: Auto commit docs
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: auto generate docs"
+          branch: ${{ github.head_ref }}

@@ -1,0 +1,24 @@
+function! im#hooks#on_enable() abort
+  if exists('*coc#config')
+    call coc#config('suggest.autoTrigger', 'none')
+  endif
+  if exists(':Codeium')
+    Codeium Disable
+  endif
+  if exists('g:blink_cmp_enabled')
+    let g:blink_cmp_enabled = v:false
+  endif
+endfunction
+
+function! im#hooks#on_disable() abort
+  if exists('*coc#config')
+    call coc#config('suggest.autoTrigger', 'always')
+  endif
+  if exists(':Codeium')
+    Codeium Enable
+  endif
+  if exists('g:blink_cmp_enabled')
+    let g:blink_cmp_enabled = v:true
+  endif
+endfunction
+

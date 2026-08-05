@@ -1,0 +1,396 @@
+# rime vim
+
+基于 [rime-ice](https://github.com/iDvelve/rime-ice) 方案的中文输入解决方案（Rime / ㄓ），面向 Vim 与 Neovim。
+
+## 目录
+
+- [简介](#简介)
+- [快速开始](#快速开始)
+  - [环境要求](#环境要求)
+  - [安装](#安装)
+  - [编译后端（rime-query）](#编译后端 rime-query)
+- [配置](#配置)
+  - [选项](#选项)
+  - [环境变量](#环境变量)
+- [使用](#使用)
+  - [命令](#命令)
+  - [按键映射](#按键映射)
+- [集成](#集成)
+  - [Autocmd](#autocmd)
+  - [Statusline](#statusline)
+- [高级主题](#高级主题)
+  - [rime-ice 配置示例](#rime-ice-配置示例)
+  - [配套插件](#配套插件)
+- [致谢](#致谢)
+- [License](#license)
+
+## 简介
+
+Rime（中州韵）输入法在 Vim / Neovim 中的集成方案，基于 [rime-ice](https://github.com/iDvelve/rime-ice) 词库，同时支持 Vim（>= 8.2.1978）与 Neovim。
+
+**用法**：进入插入模式后直接键入拼音，候选词浮窗出现；数字键或 `Up` / `Down` 选择候选，`Enter` / `Space` 上屏，`Esc` 取消本次组合。
+
+![demo](https://github.com/user-attachments/assets/20978d66-c198-426f-97f1-0ba7322cf656)
+
+主要特性：
+
+- 支持全拼、双拼、九宫格等输入方案
+- 支持简繁、中英文标点、emoji 切换
+- 候选词浮窗 / 下划线渲染，状态栏可显示当前输入状态
+
+## 快速开始
+
+### 环境要求
+
+- Vim >= 8.2.1978 或 Neovim
+- librime（编译后端所必需）
+- Rime 共享数据目录（例如 [rime-ice](https://github.com/iDvelve/rime-ice)）与用户数据目录
+
+### 安装
+
+- **vim.pack**
+
+```vim
+vim.pack.add({
+  "https://github.com/TSalmon3/rime.vim"
+})
+```
+
+- **vim-plug**
+
+```vim
+Plug 'TSalmon3/rime.vim'
+```
+
+### 编译后端（rime-query）
+
+构建的 `rime-query` 可执行文件需能被找到（默认查找 `PATH`，也可通过 `g:im_rime_bin` 指定路径），否则 `:IMStart` 会失败。
+
+> 以下命令中的仓库路径 `/path/to/rime.vim` 请替换为你的实际路径。
+
+#### macOS
+
+```bash
+cd /path/to/rime.vim/cpp
+brew install librime
+clang++ -std=c++17 -I./3rd -I/opt/homebrew/include -L/opt/homebrew/lib -lstdc++ -lrime -o rime-query rime-query.cc
+```
+
+也可以使用 CMake（必要时修改 `CMakeLists.txt` 中的 librime include / lib 路径）：
+
+```bash
+cd /path/to/rime.vim/cpp
+cmake -S . -B build
+cmake --build build
+```
+
+#### Linux
+
+需手动编译 librime，并分别指定其头文件 include 路径与动态库 lib 路径：
+
+```bash
+cd /path/to/rime.vim/cpp
+clang++ -std=c++17 -I./3rd -I/path/to/librime/include -L/path/to/librime/lib -lstdc++ -lrime -o rime-query rime-query.cc
+```
+
+#### Windows
+
+1. 下载 librime 预编译 release 压缩包。
+2. 指定 librime 头文件 include 路径与动态库 lib 路径后编译。
+3. 将 `rime.dll` 拷贝到可执行文件同一目录。
+4. 将可执行文件添加到 `PATH`。
+
+```bash
+cd /path/to/rime.vim/cpp
+clang++ -std=c++17 -I./3rd -I/path/to/librime/include -L/path/to/librime/lib -lstdc++ -lrime -o rime-query.exe rime-query.cc
+```
+
+构建完成后，请把生成的 `rime-query` 添加到 `PATH`。
+
+## 配置
+
+### 选项
+
+以下均为常用 `g:` 变量，可省略（使用默认值）。请在 vimrc 中、插件加载**之前**设置：
+
+```vim
+" rime-query 可执行文件路径（需在 PATH 中）
+let g:im_rime_bin                  = 'rime-query'
+" 用户数据目录（$RIME_USER_DATA_DIR）
+let g:im_user_data_dir             = '/path/to/rime'
+" 共享数据目录（$RIME_SHARED_DATA_DIR）
+let g:im_shared_data_dir           = '/usr/share/rime-data'
+" 后端日志路径（$RIME_LOG）
+let g:im_log_file                  = '~/.local/state/log/vim/rime.log'
+" 候选词弹窗高度
+let g:im_pumheight                 = 9
+" 设为 1 关闭下划线渲染
+let g:im_underline_disable         = 0
+" 设为 1 不创建默认按键映射
+let g:im_no_default_mappings       = 0
+" 切换输入法开关
+let g:im_toggle_key                = ';;'
+" 切换中英文标点
+let g:im_toggle_ascii_punct_key    = ';a'
+" 切换简繁体
+let g:im_toggle_traditional_key    = ';f'
+" 切换 emoji
+let g:im_toggle_emoji_key          = ';e'
+" 状态栏图标
+let g:im_status_text               = 'ㄓ'
+" 半角标点状态文本
+let g:im_status_half_text          = '半'
+" 全角标点状态文本
+let g:im_status_full_text          = '全'
+" 简体状态文本
+let g:im_status_simplified_text    = '简'
+" 繁体状态文本
+let g:im_status_traditional_text   = '繁'
+" 初始标点状态（1 为半角）
+let g:im_option_ascii_punct        = 0
+" 初始简繁状态（1 为繁体）
+let g:im_option_traditional        = 0
+```
+
+其中：
+
+- `g:im_rime_bin` 对应后端可执行文件。
+- `g:im_user_data_dir` / `g:im_shared_data_dir` / `g:im_log_file` 分别对应下述三个环境变量，且**优先级更高**。
+
+### 环境变量
+
+插件通过三个环境变量获取数据目录与日志路径，两种设置方式任选其一：
+
+#### 在 Vim 中设置
+
+在 vimrc 中、插件加载前设置：
+
+```vim
+" RIME_LOG — 后端日志路径
+let $RIME_LOG = expand("~/.local/state/log/vim/rime.log")
+
+" RIME_USER_DATA_DIR — 用户数据目录
+let $RIME_USER_DATA_DIR = "/path/to/rime"
+
+" RIME_SHARED_DATA_DIR — 共享数据目录
+let $RIME_SHARED_DATA_DIR = "/usr/share/rime-data"
+```
+
+#### 在终端中设置
+
+如果希望这些目录对所有程序生效，可在 shell 配置（如 `~/.zshrc`）中导出：
+
+```sh
+export RIME_LOG="$HOME/.local/state/log/vim/rime.log"
+export RIME_USER_DATA_DIR="$HOME/.local/share/rime-ice"
+export RIME_SHARED_DATA_DIR="/usr/share/rime-data"
+```
+
+> 注意：在 Vim 中设置 `g:im_user_data_dir` / `g:im_shared_data_dir` / `g:im_log_file` 会覆盖同名环境变量。
+
+## 使用
+
+### 命令
+
+| 命令        | 说明                                   |
+| ----------- | -------------------------------------- |
+| `:IMStart`  | 启动输入法（并启动 `rime-query` 后端） |
+| `:IMStop`   | 停止输入法                             |
+| `:IMToggle` | 切换输入法开关                         |
+
+### 按键映射
+
+默认按键映射（可设 `g:im_no_default_mappings=1` 关闭，用对应的 `g:im_*_key` 修改）：
+
+| 按键 | 模式                                 | 功能           |
+| ---- | ------------------------------------ | -------------- |
+| `;;` | normal / insert / command / terminal | 切换输入法开关 |
+| `;a` | insert                               | 切换中英文标点 |
+| `;f` | normal / insert                      | 切换简繁体     |
+| `;e` | normal                               | 切换 emoji     |
+
+## 集成
+
+### Autocmd
+
+**`autocmd User RimeIMEnable {command}`**
+
+输入法使能后触发，可用于关闭其他插件补全。
+
+**`autocmd User RimeIMDisable {command}`**
+
+输入法禁用后触发，可用于使能其他插件补全。
+
+示例：
+
+```vim
+function! im_nvim#hooks#on_enable() abort
+  if exists('*coc#config')
+    call coc#config('suggest.autoTrigger', 'none')
+  endif
+  if exists(':Codeium')
+    Codeium Disable
+  endif
+  if exists('g:blink_cmp_enabled')
+    let g:blink_cmp_enabled = v:false
+  endif
+endfunction
+
+function! im_nvim#hooks#on_disable() abort
+  if exists('*coc#config')
+    call coc#config('suggest.autoTrigger', 'always')
+  endif
+  if exists(':Codeium')
+    Codeium Enable
+  endif
+  if exists('g:blink_cmp_enabled')
+    let g:blink_cmp_enabled = v:true
+  endif
+endfunction
+
+augroup IMGroup
+  autocmd!
+  autocmd User RimeIMEnable  call im_nvim#hooks#on_enable()
+  autocmd User RimeIMDisable call im_nvim#hooks#on_disable()
+augroup END
+```
+
+### Statusline
+
+最简单的方式是在你的 `'statusline'` 选项中加入 `%{IM_Status()}`。开启时显示
+`[ㄓ]半|简`（图标 / 标点 / 简繁，文本可分别用 `g:im_status_*` 定制），关闭时返回空串。
+
+```vim
+let statusline^=%{IM_Status()}
+```
+
+## 高级主题
+
+### rime-ice 配置示例
+
+**`default.custom.yaml`**
+
+```yaml
+patch:
+  schema_list:
+    # 可以直接删除或注释不需要的方案，对应的 *.schema.yaml 方案文件也可以直接删除
+    # 除了 t9，它依赖于 rime_ice，用九宫格别删 rime_ice.schema.yaml
+    - schema: double_pinyin_flypy # 小鹤双拼
+    - schema: rime_ice # 雾凇拼音（全拼）
+    - schema: t9 # 九宫格（仓输入法）
+    - schema: double_pinyin # 自然码双拼
+    - schema: double_pinyin_abc # 智能 ABC 双拼
+    - schema: double_pinyin_mspy # 微软双拼
+    - schema: double_pinyin_sogou # 搜狗双拼
+    - schema: double_pinyin_ziguang # 紫光双拼
+
+  # 菜单
+  menu:
+    page_size: 5 # 候选词个数
+```
+
+**`double_pinyin_flypy.custom.yaml`**
+
+```yaml
+patch:
+  schema:
+    dependencies:
+      - melt_eng # 英文输入，作为次翻译器挂载到拼音方案
+      - radical_pinyin # 部件拆字，反查及辅码
+
+  # 词频 {{{1
+  "translator/enable_user_dict": true
+
+  # 混拼 {{{1
+  # 在 engine/filters 插入长词优先的 Lua
+  # 双拼不转换为全拼编码
+  translator/preedit_format: []
+
+  engine/filters:
+    - lua_filter@*corrector
+    - reverse_lookup_filter@radical_reverse_lookup
+    - lua_filter@*autocap_filter
+    - lua_filter@*pin_cand_filter
+    - lua_filter@*long_word_filter # 增加长词优先
+    - lua_filter@*reduce_english_filter
+    - simplifier@emoji
+    - simplifier@traditionalize
+    - lua_filter@*search@radical_pinyin
+    - uniquifier
+
+  # 长词优先设置为提升 10 个词到第 1 个位置
+  long_word_filter:
+    count: 10
+    idx: 1
+
+  # xform 变形改为 derive 派生
+  speller/algebra:
+    # 模糊音
+    - derive/^([zcs])h/$1/
+    - derive/^([zcs])([^h])/$1h$2/
+    - derive/ang$/an/
+    - derive/an$/ang/
+    - derive/eng$/en/
+    - derive/en$/eng/
+    - derive/in$/ing/
+    - derive/ing$/in/
+    - derive/ian$/iang/
+    - derive/iang$/ian/
+    - derive/uan$/uang/
+    - derive/uang$/uan/
+    - derive/ong$/on/
+      ### v u 转换
+      # 雾凇的词库严格按照正确的 u v(ü) 注音的，下面两行支持使用错误的拼音，例如 qv nue 来响应 qu nve
+    - derive/^([nl])ve$/$1ue/
+    - derive/^([jqxy])u/$1v/
+      # 以防引入的其他词库没按照正确方式注音，也做一个转换
+    - derive/^([nl])ue$/$1ve/
+    - derive/^([jqxy])v/$1u/
+
+    # 双拼
+    - derive/^([jqxy])u$/$1v/
+    - derive/^([aoe])([ioun])$/$1$1$2/
+    - derive/^([aoe])(ng)?$/$1$1$2/
+    - derive/iu$/Ⓠ/
+    - derive/(.)ei$/$1Ⓦ/
+    - derive/uan$/Ⓡ/
+    - derive/[uv]e$/Ⓣ/
+    - derive/un$/Ⓨ/
+    - derive/^sh/Ⓤ/
+    - derive/^ch/Ⓘ/
+    - derive/^zh/Ⓥ/
+    - derive/uo$/Ⓞ/
+    - derive/ie$/Ⓟ/
+    - derive/(.)i?ong$/$1Ⓢ/
+    - derive/ing$|uai$/Ⓚ/
+    - derive/(.)ai$/$1Ⓓ/
+    - derive/(.)en$/$1Ⓕ/
+    - derive/(.)eng$/$1Ⓖ/
+    - derive/[iu]ang$/Ⓛ/
+    - derive/(.)ang$/$1Ⓗ/
+    - derive/ian$/Ⓜ/
+    - derive/(.)an$/$1Ⓙ/
+    - derive/(.)ou$/$1Ⓩ/
+    - derive/[iu]a$/Ⓧ/
+    - derive/iao$/Ⓝ/
+    - derive/(.)ao$/$1Ⓒ/
+    - derive/ui$/Ⓥ/
+    - derive/in$/Ⓑ/
+    - xlit/ⓆⓌⓇⓉⓎⓊⒾⓄⓅⓈⒹⒻⒼⒽⒿⓀⓁⓏⓍⒸⓋⒷⓃⓂ/qwrtyuiopsdfghjklzxcvbnm/
+```
+
+### 配套插件
+
+- [jieba.vim](https://github.com/kkew3/jieba.vim) — jieba 的 Vim/Nvim 按词跳转插件
+- [pangu.vim](https://github.com/hotoo/pangu.vim) — 中文排版自动规范化的 Vim 插件
+- [vim-easymotion-zh](https://github.com/zzhirong/vim-easymotion-zh) — 基于小鹤双拼让 EasyMotion 识别中文
+
+## 致谢
+
+- [ZFVimIM](https://github.com/ZSaberLv0/ZFVimIM) — vim 输入法 / Vim Input Method by pure vim script, support: user word, dynamic word priority, cloud db files
+- [rime-ls](https://github.com/wlh320/rime-ls) — A language server that provides input method functionality using librime，通过 LSP 代码补全使用 Rime 输入法
+- [rime.nvim](https://github.com/rimeinn/rime.nvim) — ㄓ rime for neovim
+
+## License
+
+MIT

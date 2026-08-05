@@ -1,0 +1,4 @@
+-ID:/Library/librime/include
+-I/opt/homebrew/include
+-I3rd
+-std=c++17

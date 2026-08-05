@@ -1,0 +1,16 @@
+[project-init]
+command=cmake -S . -B build
+cwd=$(VIM_ROOT)
+
+[project-build]
+command=cmake --build build
+cwd=$(VMI_ROOT)
+notify
+
+[project-run]
+cwd=$(VIM_ROOT)
+
+[file-run]
+command/macos:emake=emake --ini=emake/darwin.ini $(VIM_FILENAME)
+command/wsl-ubuntu24:emake=emake --ini=emake/linux.ini $(VIM_FILENAME)
+command/win64:emake=emake --ini=emake/llm.ini $(VIM_FILENAME)

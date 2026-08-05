@@ -1,0 +1,294 @@
+#include <cstdlib>
+#include <csignal>
+#include <ctype.h>
+#include <string>
+#include <vector>
+#include <iostream>
+#include <filesystem>
+
+#include <rime_api.h>
+#include "3rd/json.hpp"
+#include "3rd/spdlog/spdlog.h"
+#include "3rd/spdlog/sinks/basic_file_sink.h"
+
+using json = nlohmann::json;
+
+static void log_init() {// {{{
+  const char *log_path = getenv("RIME_LOG");
+  if (!log_path) {
+    const char *home = getenv("HOME");
+    if (home) {
+      std::string default_log = std::string(home) + "/.cache/.rime-query.log";
+      std::filesystem::create_directories(std::filesystem::path(default_log).parent_path());
+    } else {
+      log_path = "./rime-query.log";
+    }
+  }
+  auto logger = spdlog::basic_logger_mt("rime", log_path);
+  spdlog::set_default_logger(logger);
+  spdlog::set_level(spdlog::level::debug);
+  spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] %v");
+  spdlog::flush_on(spdlog::level::debug);
+}// }}}
+
+static RimeSessionId g_session = 0;
+static volatile std::sig_atomic_t g_should_exit = 0;
+
+static void on_signal(int) {
+    g_should_exit = 1;
+}
+
+static void rime_init(const char *shared_dir, const char *user_dir) {// {{{
+    RIME_STRUCT(RimeTraits, traits);
+    traits.shared_data_dir        = shared_dir;
+    traits.user_data_dir          = user_dir;
+    traits.app_name               = "rime.vim-query";
+    traits.distribution_name      = "Rime";
+    traits.distribution_code_name = "rime-query";
+    traits.distribution_version   = "0.2.0";
+    traits.min_log_level          = 3;
+
+    RimeApi *api = rime_get_api();
+    api->setup(&traits);
+    api->initialize(&traits);
+
+    if (api->start_maintenance(false)) {
+        spdlog::info("deployment started, waiting for it to finish...");
+        api->join_maintenance_thread();
+        spdlog::info("deployment finished");
+    }
+}// }}}
+
+static RimeSessionId get_session() {// {{{
+    RimeApi *api = rime_get_api();
+    if (!g_session || !api->find_session(g_session)) {
+        g_session = api->create_session();
+        spdlog::info("created new session: {}", (long long)g_session);
+    }
+    return g_session;
+}// }}}
+
+static std::string fetch_commit() {// {{{
+    RimeApi *api = rime_get_api();
+    RimeSessionId sid = get_session();
+
+    RIME_STRUCT(RimeCommit, commit);
+    std::string committed;
+    if (sid && api->get_commit(sid, &commit)) {
+        if (commit.text) committed = commit.text;
+        api->free_commit(&commit);
+    }
+    return committed;
+}// }}}
+
+static void fill_context(json &resp) {// {{{
+    RimeApi *api = rime_get_api();
+    RimeSessionId sid = get_session();
+
+    RIME_STRUCT(RimeContext, ctx);
+    if (!sid || !api->get_context(sid, &ctx)) {
+        resp["candidates"] = json::array();
+        resp["comments"]   = json::array();
+        resp["preedit"]    = "";
+        resp["cursor_pos"] = 0;
+        resp["sel_start"]  = 0;
+        resp["sel_end"]    = 0;
+        resp["has_more"]   = false;
+        resp["composing"]  = false;
+        return;
+    }
+
+    std::vector<std::string> candidates;
+    std::vector<std::string> comments;
+    for (int i = 0; i < ctx.menu.num_candidates; ++i) {
+        candidates.push_back(ctx.menu.candidates[i].text ? ctx.menu.candidates[i].text : "");
+        comments.push_back(ctx.menu.candidates[i].comment ? ctx.menu.candidates[i].comment : "");
+    }
+
+    std::string preedit = ctx.composition.preedit ? ctx.composition.preedit : "";
+
+    resp["candidates"] = candidates;
+    resp["comments"]   = comments;
+    resp["preedit"]    = preedit;
+
+    resp["cursor_pos"] = ctx.composition.cursor_pos;
+    resp["sel_start"]  = ctx.composition.sel_start;
+    resp["sel_end"]    = ctx.composition.sel_end;
+    resp["has_more"]   = !ctx.menu.is_last_page;
+    resp["composing"]  = !preedit.empty();
+
+    api->free_context(&ctx);
+}// }}}
+
+static json handle_request(const json &req) {// {{{
+    json resp;
+    resp["id"] = req.value("id", 0);
+
+    std::string type = req.value("type", "");
+    RimeApi *api = rime_get_api();
+
+    // --- ping ---
+    if (type == "ping") {
+        resp["ok"] = true;
+        return resp;
+    }
+
+    if (type == "key") {
+      if (!req.contains("keycode")) {
+        resp["ok"]    = false;
+        resp["error"] = "key requires 'keycode'";
+        return resp;
+      }
+      int keycode = req.value("keycode", 0);
+      int mask    = req.value("mask", 0);
+
+      RimeSessionId sid = get_session();
+      Bool accepted = api->process_key(sid, keycode, mask);
+
+      resp["ok"]        = true;
+      resp["accepted"]  = (bool)accepted;
+      resp["committed"] = fetch_commit();
+      fill_context(resp);
+      return resp;
+    }
+
+    if (type == "select") {
+        int index = req.value("index", 0);
+        RimeSessionId sid = get_session();
+        api->select_candidate_on_current_page(sid, index);
+
+        resp["ok"]        = true;
+        resp["committed"] = fetch_commit();
+        fill_context(resp);
+        return resp;
+    }
+
+    // --- reset：用户主动放弃当前组合（Esc / 离开插入模式等） ---
+    if (type == "reset") {
+        RimeSessionId sid = get_session();
+        if (sid) api->clear_composition(sid);
+        resp["ok"] = true;
+        return resp;
+    }
+
+    // --- toggle_option ---
+    if (type == "toggle_option") {
+        std::string option = req.value("option", "");
+        if (option.empty()) {
+            resp["ok"]    = false;
+            resp["error"] = "option is required";
+            return resp;
+        }
+        RimeSessionId sid = get_session();
+        if (!sid) {
+            resp["ok"]    = false;
+            resp["error"] = "no active session";
+            return resp;
+        }
+        Bool current   = api->get_option(sid, option.c_str());
+        Bool new_value = current ? False : True;
+        api->set_option(sid, option.c_str(), new_value);
+
+        resp["ok"]     = true;
+        resp["option"] = option;
+        resp["value"]  = (bool)new_value;
+        return resp;
+    }
+
+    // --- set_option：把某个开关设置为指定值（幂等） ---
+    if (type == "set_option") {
+        std::string option = req.value("option", "");
+        if (option.empty()) {
+            resp["ok"]    = false;
+            resp["error"] = "option is required";
+            return resp;
+        }
+        RimeSessionId sid = get_session();
+        if (!sid) {
+            resp["ok"]    = false;
+            resp["error"] = "no active session";
+            return resp;
+        }
+        Bool value = req.value("value", false) ? True : False;
+        api->set_option(sid, option.c_str(), value);
+
+        resp["ok"]     = true;
+        resp["option"] = option;
+        resp["value"]  = (bool)value;
+        return resp;
+    }
+
+    // --- get_option：读取某个开关当前值 ---
+    if (type == "get_option") {
+        std::string option = req.value("option", "");
+        if (option.empty()) {
+            resp["ok"]    = false;
+            resp["error"] = "option is required";
+            return resp;
+        }
+        RimeSessionId sid = get_session();
+        if (!sid) {
+            resp["ok"]    = false;
+            resp["error"] = "no active session";
+            return resp;
+        }
+        Bool current = api->get_option(sid, option.c_str());
+
+        resp["ok"]     = true;
+        resp["option"] = option;
+        resp["value"]  = (bool)current;
+        return resp;
+    }
+
+    resp["ok"]    = false;
+    resp["error"] = "unknown type: " + type;
+    return resp;
+}// }}}
+
+int main() {// {{{
+    log_init();
+
+    std::signal(SIGINT,  on_signal);
+    std::signal(SIGTERM, on_signal);
+
+    const char *shared_dir = getenv("RIME_SHARED_DATA_DIR");
+    const char *user_dir   = getenv("RIME_USER_DATA_DIR");
+
+    if (!shared_dir || !user_dir) {
+      spdlog::info("Check env $RIME_SHARED_DATA_DIR and $RIME_USER_DATA_DIR!!!");
+      return 1;
+    }
+
+    rime_init(shared_dir, user_dir);
+
+    spdlog::info("RIME_LOG: {}", getenv("RIME_LOG") ? getenv("RIME_LOG") : "(none)");
+    spdlog::info("RIME_SHARED_DATA_DIR: {}", shared_dir);
+    spdlog::info("RIME_USER_DATA_DIR: {}", user_dir);
+
+    std::string line;
+    while (!g_should_exit && std::getline(std::cin, line)) {
+        if (line.empty()) continue;
+
+        try {
+            json req  = json::parse(line);
+            spdlog::debug(">> {}", line);
+            json resp = handle_request(req);
+            std::cout << resp.dump() << "\n";
+            spdlog::debug("<< {}", resp.dump());
+            std::cout.flush();
+        } catch (const json::exception &e) {
+            json err;
+            err["id"]    = 0;
+            err["ok"]    = false;
+            err["error"] = std::string("JSON parse error: ") + e.what();
+            std::cout << err.dump() << "\n";
+            std::cout.flush();
+        }
+    }
+
+    RimeApi *api = rime_get_api();
+    if (g_session) api->destroy_session(g_session);
+    api->finalize();
+
+    return 0;
+}// }}}
