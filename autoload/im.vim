@@ -54,6 +54,10 @@ function! s:redraw(ctx) abort"{{{
   call cursor(lnum, state.boundary + state.cursor_pos)
 
   let state.candidate_count = len(a:ctx.candidates)
+  let words = map(copy(a:ctx.candidates), 'v:val.word')
+  let norm_preedit = substitute(a:ctx.preedit, '\s', '', 'g')
+  let candidates_changed = (words !=# get(state, 'last_candidates', []))
+        \ || (norm_preedit !=# get(state, 'last_preedit', ''))
   if !empty(a:ctx.candidates)
     let result = []
     let i = 1
@@ -68,8 +72,25 @@ function! s:redraw(ctx) abort"{{{
             \ })
       let i += 1
     endfor
-    call complete(state.boundary, result)
+    if candidates_changed
+      call complete(state.boundary, result)
+      let idx = a:ctx.highlighted_candidate_index
+      if idx > 0
+        call feedkeys(repeat("\<down>", idx), 'ni')
+      endif
+    else
+      let delta = a:ctx.highlighted_candidate_index - get(state, 'last_hl', 0)
+      if delta > 0
+        call feedkeys(repeat("\<down>", delta), 'ni')
+      elseif delta < 0
+        call feedkeys(repeat("\<up>", -delta), 'ni')
+      endif
+    endif
   endif
+
+  let state.last_candidates = words
+  let state.last_preedit    = norm_preedit
+  let state.last_hl         = a:ctx.highlighted_candidate_index
 
   call im#underline#render()
 endfunction"}}}

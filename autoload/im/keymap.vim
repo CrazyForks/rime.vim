@@ -2,14 +2,16 @@ let s:keysym = {
       \ 'bs'       : 0xff08,
       \ 'left'     : 0xff51,
       \ 'right'    : 0xff53,
+      \ 'up'       : 0xff52,
+      \ 'down'     : 0xff54,
       \ 'home'     : 0xff50,
       \ 'end'      : 0xff57,
       \ 'tab'      : 0xff09,
       \ 'pagedown' : 0xff56,
       \ 'pageup'   : 0xff55,
       \ 'return'   : 0xff0d,
-      \ 'space'   : 0x0020,
-      \ 'escape' : 0xff1b
+      \ 'space'    : 0x0020,
+      \ 'escape'   : 0xff1b
       \ }
 
 let s:kShiftMask = 1
@@ -19,8 +21,8 @@ let s:mapped_keys = {
       \ 'letters': split('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', '\zs'),
       \ 'symbols' : ['`','-','+','=','!','$','@','#','%','&','^','*','_','(',')','[',']','{','}','<','>','\','/','~',';',':',',','.','?',"'",'"'],
       \ 'numbers': ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
-      \ 'specials': ['<bs>', '<s-bs>', '<left>', '<right>', '<c-a>', '<c-e>', '<space>', '<cr>',
-      \ '<tab>', '<s-tab>', '<c-w>', '<c-u>', '<pagedown>', '<pageup>']
+      \ 'specials': ['<bs>', '<s-bs>', '<left>', '<right>', '<up>', '<down>','<c-a>', '<c-e>', '<space>', '<cr>',
+      \ '<tab>', '<s-tab>', '<c-w>', '<c-u>', '<c-n>', '<c-p>', '<pagedown>', '<pageup>']
       \ }
 
 function! im#keymap#setup() abort"{{{
@@ -43,6 +45,10 @@ function! im#keymap#setup() abort"{{{
   lnoremap <expr> <c-w>   im#keymap#shift_backspace()
   lnoremap <expr> <left>  im#keymap#move('left')
   lnoremap <expr> <right> im#keymap#move('right')
+  lnoremap <expr> <up>  im#keymap#move('up')
+  lnoremap <expr> <down> im#keymap#move('down')
+  lnoremap <expr> <c-n>  im#keymap#move('up')
+  lnoremap <expr> <c-p> im#keymap#move('down')
   lnoremap <expr> <c-a>   im#keymap#move('home')
   lnoremap <expr> <c-e>   im#keymap#move('end')
   lnoremap <expr> <space> im#keymap#space()
@@ -112,12 +118,15 @@ function! im#keymap#move(direction) abort"{{{
   let move_fallback = {
         \ 'left'  : "\<left>",
         \ 'right' : "\<right>",
+        \ 'up'    : "\<up>",
+        \ 'down'  : "\<down>",
         \ 'home'  : "\<home>",
         \ 'end'   : "\<end>",
         \ }
   if !im#state#composing()
     return move_fallback[a:direction]
   endif
+
   return "\<Cmd>call im#key(" . s:keysym[a:direction] . ", 0, " . string(move_fallback[a:direction]) . ")\<CR>"
 endfunction"}}}
 
