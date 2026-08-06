@@ -10,6 +10,9 @@ let s:state = {
       \ 'sel_start'       : 0,
       \ 'sel_end'         : 0,
       \ 'has_more'        : v:false,
+      \ 'last_candidates' : [],
+      \ 'last_preedit'    : '',
+      \ 'last_hl'         : 0,
       \ 'ascii_punct'     : 0,
       \ 'emoji'           : 0,
       \ 'full_shape'      : 0,
@@ -39,6 +42,9 @@ function! im#state#init() abort
   let s:state.sel_start      = 0
   let s:state.sel_end        = 0
   let s:state.has_more       = v:false
+  let s:state.last_candidates = []
+  let s:state.last_preedit    = ''
+  let s:state.last_hl         = 0
   let s:state.mark_id        = 0
   let s:state.match_id       = 0
 
@@ -60,5 +66,8 @@ function! im#state#reset_input() abort
   let s:state.cursor_pos      = 0
   let s:state.sel_start       = 0
   let s:state.sel_end         = 0
+  let s:state.last_candidates = []
+  let s:state.last_preedit    = ''
+  let s:state.last_hl         = 0
   call im#rime#reset()
 endfunction

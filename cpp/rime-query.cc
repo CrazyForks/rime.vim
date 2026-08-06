@@ -121,6 +121,8 @@ static void fill_context(json &resp) {// {{{
         resp["cursor_pos"] = 0;
         resp["sel_start"]  = 0;
         resp["sel_end"]    = 0;
+        resp["page_no"]    = 0;
+        resp["highlighted_candidate_index"] = 0;
         resp["has_more"]   = false;
         resp["composing"]  = false;
         return;
@@ -142,6 +144,8 @@ static void fill_context(json &resp) {// {{{
     resp["cursor_pos"] = ctx.composition.cursor_pos;
     resp["sel_start"]  = ctx.composition.sel_start;
     resp["sel_end"]    = ctx.composition.sel_end;
+    resp["page_no"]    = ctx.menu.page_no;
+    resp["highlighted_candidate_index"] = ctx.menu.highlighted_candidate_index;
     resp["has_more"]   = !ctx.menu.is_last_page;
     resp["composing"]  = !preedit.empty();
 
