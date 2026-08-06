@@ -52,6 +52,8 @@ function! im#keymap#setup() abort"{{{
 
   lnoremap <expr> <pagedown> im#keymap#pagedown()
   lnoremap <expr> <pageup>  im#keymap#pageup()
+
+  doautocmd User RimeKeymapSetup
 endfunction"}}}
 
 function! im#keymap#clear() abort"{{{
@@ -59,6 +61,7 @@ function! im#keymap#clear() abort"{{{
         \ s:mapped_keys.symbols + s:mapped_keys.specials
     silent! execute 'lunmap ' . key
   endfor
+  doautocmd User RimeKeymapClear
 endfunction"}}}
 
 function! s:begin_composition() abort"{{{

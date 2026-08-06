@@ -8,10 +8,6 @@ endif
 
 let g:loaded_im_nvim = 1
 
-" Rime handles its own candidate lookup; don't let Vim's builtin
-" 'imsearch' get in the way of it.
-" set imsearch=0
-
 call im#rime#init()
 
 command! IMToggle             call im#toggle()
@@ -26,8 +22,6 @@ if !get(g:, 'im_no_default_mappings', 0)
   let s:toggle_emoji_key   = get(g:, 'im_toggle_emoji_key', ';e')
   execute 'nnoremap <silent> ' . s:toggle_key . ' <cmd>call im#toggle()<cr>'
   execute 'inoremap <silent> ' . s:toggle_key . ' <cmd>call im#toggle()<cr><c-^>'
-  execute 'cnoremap <silent> ' . s:toggle_key . ' <cmd>call IMCmdEdit()<cr>'
-  execute 'tnoremap <silent> ' . s:toggle_key . ' <c-\><c-n>q:a:PassToTerm<space>'
   execute 'inoremap <silent> ' . s:toggle_ascii_punct_key . ' <cmd>call im#rime#toggle_ascii_punct()<cr>'
   execute 'inoremap <silent> ' . s:toggle_ascii_punct_key . ' <cmd>call im#rime#toggle_ascii_punct()<cr>'
   execute 'nnoremap <silent> ' . s:toggle_emoji_key . ' <cmd>call im#rime#toggle_emoji()<cr>'

@@ -31,6 +31,7 @@ Rime（中州韵）输入法在 Vim / Neovim 中的集成方案，基于 [rime-i
 **用法**：进入插入模式后直接键入拼音，候选词浮窗出现；数字键或 `Up` / `Down` 选择候选，`Enter` / `Space` 上屏，`Esc` 取消本次组合。
 
 ![demo](https://github.com/user-attachments/assets/20978d66-c198-426f-97f1-0ba7322cf656)
+![demo2](https://github.com/user-attachments/assets/93d255dd-a9e4-4612-905a-bea1bf0a5501)
 
 主要特性：
 
@@ -73,7 +74,7 @@ Plug 'TSalmon3/rime.vim'
 ```bash
 cd /path/to/rime.vim/cpp
 brew install librime
-clang++ -std=c++17 -I./3rd -I/opt/homebrew/include -L/opt/homebrew/lib -lstdc++ -lrime -o rime-query rime-query.cc
+clang++ -std=c++17 -I./3rd -I/opt/homebrew/include -L/opt/homebrew/lib -lstdc++ -lrime -o build/rime-query rime-query.cc
 ```
 
 也可以使用 CMake（必要时修改 `CMakeLists.txt` 中的 librime include / lib 路径）：
@@ -90,7 +91,7 @@ cmake --build build
 
 ```bash
 cd /path/to/rime.vim/cpp
-clang++ -std=c++17 -I./3rd -I/path/to/librime/include -L/path/to/librime/lib -lstdc++ -lrime -o rime-query rime-query.cc
+clang++ -std=c++17 -I./3rd -I/path/to/librime/include -L/path/to/librime/lib -lstdc++ -lrime -o build/rime-query rime-query.cc
 ```
 
 #### Windows
@@ -102,7 +103,7 @@ clang++ -std=c++17 -I./3rd -I/path/to/librime/include -L/path/to/librime/lib -ls
 
 ```bash
 cd /path/to/rime.vim/cpp
-clang++ -std=c++17 -I./3rd -I/path/to/librime/include -L/path/to/librime/lib -lstdc++ -lrime -o rime-query.exe rime-query.cc
+clang++ -std=c++17 -I./3rd -I/path/to/librime/include -L/path/to/librime/lib -lrime -o build/rime-query.exe rime-query.cc
 ```
 
 构建完成后，请把生成的 `rime-query` 添加到 `PATH`。
@@ -150,6 +151,42 @@ let g:im_status_traditional_text   = '繁'
 let g:im_option_ascii_punct        = 0
 " 初始简繁状态（1 为繁体）
 let g:im_option_traditional        = 0
+
+
+" 在 Cmdline 中使用
+function! IMCmdEdit()
+    let cmdtype = getcmdtype()
+    if cmdtype != ':' && cmdtype != '/'
+        return ''
+    endif
+
+    call im#start()
+
+    let cmdline = getcmdline()
+    if cmdline ==# ''
+        call feedkeys("\<c-c>q" . cmdtype . 'a', 'nt')
+    else
+        let charPos = strchars(strpart(cmdline, 0, getcmdpos() - 1))
+        let moveRight = charPos > 0 ? charPos . 'l' : ''
+        call feedkeys("\<c-c>q" . cmdtype . 'k0' . moveRight . 'a', 'nt')
+    endif
+    return ''
+endfunction
+cnoremap <silent><expr> ;; IMCmdEdit()
+
+
+" 在 Terminal 中使用
+function! PassToTerm(text)
+  let @t = a:text
+  if has('nvim')
+    call feedkeys('"tpa', 'nt')
+  else
+    call feedkeys("a\<c-w>\"t", 'nt')
+  endif
+  redraw!
+endfunction
+command! -nargs=* PassToTerm :call PassToTerm(<q-args>)
+tnoremap ;; <c-\><c-n><cmd>call im#start()<cr>q:a:PassToTerm<space>
 ```
 
 其中：
@@ -205,9 +242,9 @@ export RIME_SHARED_DATA_DIR="/usr/share/rime-data"
 | 按键 | 模式                                 | 功能           |
 | ---- | ------------------------------------ | -------------- |
 | `;;` | normal / insert / command / terminal | 切换输入法开关 |
-| `;a` | insert                               | 切换中英文标点 |
+| `;a` | normal / insert                      | 切换中英文标点 |
 | `;f` | normal / insert                      | 切换简繁体     |
-| `;e` | normal                               | 切换 emoji     |
+| `;e` | normal / insert                      | 切换 emoji     |
 
 ## 集成
 

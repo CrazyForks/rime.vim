@@ -1,6 +1,9 @@
+#ifdef _WIN32
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include <cstdlib>
 #include <csignal>
-#include <ctype.h>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -10,21 +13,46 @@
 #include "3rd/json.hpp"
 #include "3rd/spdlog/spdlog.h"
 #include "3rd/spdlog/sinks/basic_file_sink.h"
+#include "3rd/spdlog/sinks/null_sink.h"
 
 using json = nlohmann::json;
 
 static void log_init() {// {{{
-  const char *log_path = getenv("RIME_LOG");
-  if (!log_path) {
-    const char *home = getenv("HOME");
-    if (home) {
-      std::string default_log = std::string(home) + "/.cache/.rime-query.log";
-      std::filesystem::create_directories(std::filesystem::path(default_log).parent_path());
-    } else {
-      log_path = "./rime-query.log";
+  std::string log_path;
+  bool to_file = false;
+  const char *env_log = getenv("RIME_LOG");
+  if (env_log && *env_log) {
+    log_path = env_log;
+    to_file = true;
+  } else {
+#ifdef _WIN32
+    const char *local = getenv("LOCALAPPDATA");
+    if (local && *local) {
+      log_path = std::string(local) + "\\rime-query\\rime.log";
+      to_file = true;
     }
+#else
+    const char *xdg = getenv("XDG_STATE_HOME");
+    if (xdg && *xdg) {
+      log_path = std::string(xdg) + "/rime-query/rime.log";
+      to_file = true;
+    } else {
+      const char *home = getenv("HOME");
+      if (home) {
+        log_path = std::string(home) + "/.local/state/rime-query/rime.log";
+        to_file = true;
+      }
+    }
+#endif
   }
-  auto logger = spdlog::basic_logger_mt("rime", log_path);
+
+  std::shared_ptr<spdlog::logger> logger;
+  if (to_file) {
+    std::filesystem::create_directories(std::filesystem::path(log_path).parent_path());
+    logger = spdlog::basic_logger_mt("rime", log_path);
+  } else {
+    logger = spdlog::null_logger_mt("rime");
+  }
   spdlog::set_default_logger(logger);
   spdlog::set_level(spdlog::level::debug);
   spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] %v");
@@ -163,7 +191,6 @@ static json handle_request(const json &req) {// {{{
         return resp;
     }
 
-    // --- reset：用户主动放弃当前组合（Esc / 离开插入模式等） ---
     if (type == "reset") {
         RimeSessionId sid = get_session();
         if (sid) api->clear_composition(sid);
@@ -195,7 +222,6 @@ static json handle_request(const json &req) {// {{{
         return resp;
     }
 
-    // --- set_option：把某个开关设置为指定值（幂等） ---
     if (type == "set_option") {
         std::string option = req.value("option", "");
         if (option.empty()) {
@@ -218,7 +244,6 @@ static json handle_request(const json &req) {// {{{
         return resp;
     }
 
-    // --- get_option：读取某个开关当前值 ---
     if (type == "get_option") {
         std::string option = req.value("option", "");
         if (option.empty()) {

@@ -6,22 +6,22 @@ A Chinese input method (Rime / ㄓ) solution for Vim and Neovim, based on the
 ## Table of Contents
 
 - [Introduction](#introduction)
-- [Quick Start](#Quick Start)
+- [Quick Start](#quick-start)
   - [Requirements](#requirements)
   - [Installation](#installation)
-  - [Building the backend](#Building the backend)
+  - [Building the backend](#building-the-backend)
 - [Configuration](#configuration)
   - [Options](#options)
-  - [Environment variables](#Environment variables)
+  - [Environment variables](#environment-variables)
 - [Usage](#usage)
   - [Commands](#commands)
-  - [Key mappings](#Key mappings)
+  - [Key mappings](#key-mappings)
 - [Integration](#integration)
   - [Autocmd](#autocmd)
   - [Statusline](#statusline)
-- [Advanced Topics](#Advanced Topics)
-  - [rime-ice configuration examples](#rime-ice configuration examples)
-  - [Complementary plugins](#Complementary plugins)
+- [Advanced Topics](#advanced-topics)
+  - [rime-ice configuration examples](#rime-ice-configuration-examples)
+  - [Complementary plugins](#complementary-plugins)
 - [Acknowledgments](#acknowledgments)
 - [License](#license)
 
@@ -38,6 +38,7 @@ appears. Use the number keys or `Up` / `Down` to select a candidate,
 `Enter` / `Space` to commit, and `Esc` to cancel the current composition.
 
 ![demo](https://github.com/user-attachments/assets/20978d66-c198-426f-97f1-0ba7322cf656)
+![demo2](https://github.com/user-attachments/assets/93d255dd-a9e4-4612-905a-bea1bf0a5501)
 
 Key features:
 
@@ -85,7 +86,7 @@ fail.
 ```bash
 cd /path/to/rime.vim/cpp
 brew install librime
-clang++ -std=c++17 -I./3rd -I/opt/homebrew/include -L/opt/homebrew/lib -lstdc++ -lrime -o rime-query rime-query.cc
+clang++ -std=c++17 -I./3rd -I/opt/homebrew/include -L/opt/homebrew/lib -lstdc++ -lrime -o build/rime-query rime-query.cc
 ```
 
 Alternatively, use CMake (edit the librime include / lib paths in `CMakeLists.txt` if needed):
@@ -103,7 +104,7 @@ library lib path separately:
 
 ```bash
 cd /path/to/rime.vim/cpp
-clang++ -std=c++17 -I./3rd -I/path/to/librime/include -L/path/to/librime/lib -lstdc++ -lrime -o rime-query rime-query.cc
+clang++ -std=c++17 -I./3rd -I/path/to/librime/include -L/path/to/librime/lib -lstdc++ -lrime -o build/rime-query rime-query.cc
 ```
 
 #### Windows
@@ -115,7 +116,7 @@ clang++ -std=c++17 -I./3rd -I/path/to/librime/include -L/path/to/librime/lib -ls
 
 ```bash
 cd /path/to/rime.vim/cpp
-clang++ -std=c++17 -I./3rd -I/path/to/librime/include -L/path/to/librime/lib -lstdc++ -lrime -o rime-query.exe rime-query.cc
+clang++ -std=c++17 -I./3rd -I/path/to/librime/include -L/path/to/librime/lib -lstdc++ -lrime -o build/rime-query.exe rime-query.cc
 ```
 
 After building, add the generated `rime-query` to `PATH`.
@@ -165,7 +166,43 @@ let g:im_status_traditional_text   = '繁'
 " Initial punctuation state (1 = half-width)
 let g:im_option_ascii_punct        = 0
 " Initial simplified/traditional state (1 = traditional)
-let g:im_option_traditional        = 0
+let g:im_option_traditional   = 0
+
+
+" Use in the command line
+function! IMCmdEdit()
+    let cmdtype = getcmdtype()
+    if cmdtype != ':' && cmdtype != '/'
+        return ''
+    endif
+
+    call im#start()
+
+    let cmdline = getcmdline()
+    if cmdline ==# ''
+        call feedkeys("\<c-c>q" . cmdtype . 'a', 'nt')
+    else
+        let charPos = strchars(strpart(cmdline, 0, getcmdpos() - 1))
+        let moveRight = charPos > 0 ? charPos . 'l' : ''
+        call feedkeys("\<c-c>q" . cmdtype . 'k0' . moveRight . 'a', 'nt')
+    endif
+    return ''
+endfunction
+cnoremap <silent><expr> ;; IMCmdEdit()
+
+
+" Use in the terminal
+function! PassToTerm(text)
+  let @t = a:text
+  if has('nvim')
+    call feedkeys('"tpa', 'nt')
+  else
+    call feedkeys("a\<c-w>\"t", 'nt')
+  endif
+  redraw!
+endfunction
+command! -nargs=* PassToTerm :call PassToTerm(<q-args>)
+tnoremap ;; <c-\><c-n><cmd>call im#start()<cr>q:a:PassToTerm<space>
 ```
 
 Notes:
@@ -228,9 +265,9 @@ customize via the corresponding `g:im_*_key`):
 | Key | Mode                                | Function              |
 | --- | ----------------------------------- | --------------------- |
 | `;;`| normal / insert / command / terminal | Toggle input method    |
-| `;a`| insert                              | Toggle punctuation     |
+| `;a`| normal / insert                      | Toggle punctuation     |
 | `;f`| normal / insert                     | Toggle traditional     |
-| `;e`| normal                              | Toggle emoji           |
+| `;e`| normal / insert                      | Toggle emoji           |
 
 ---
 
@@ -275,7 +312,7 @@ function! im_nvim#hooks#on_disable() abort
   endif
 endfunction
 
-augroup RimeGroup
+augroup IMGroup
   autocmd!
   autocmd User RimeIMEnable  call im_nvim#hooks#on_enable()
   autocmd User RimeIMDisable call im_nvim#hooks#on_disable()
