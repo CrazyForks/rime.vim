@@ -21,10 +21,10 @@ if !get(g:, 'im_no_default_mappings', 0)
   let s:toggle_traditional_key   = get(g:, 'im_toggle_traditional_key', ';f')
   let s:toggle_emoji_key   = get(g:, 'im_toggle_emoji_key', ';e')
   execute 'nnoremap <silent> ' . s:toggle_key . ' <cmd>call im#toggle()<cr>'
-  execute 'inoremap <silent> ' . s:toggle_key . ' <cmd>call im#toggle()<cr><c-^>'
+  execute 'inoremap <silent> ' . s:toggle_key . ' <cmd>call im#toggle()<cr>'
   execute 'inoremap <silent> ' . s:toggle_ascii_punct_key . ' <cmd>call im#rime#toggle_ascii_punct()<cr>'
-  execute 'inoremap <silent> ' . s:toggle_ascii_punct_key . ' <cmd>call im#rime#toggle_ascii_punct()<cr>'
-  execute 'nnoremap <silent> ' . s:toggle_emoji_key . ' <cmd>call im#rime#toggle_emoji()<cr>'
+  execute 'nnoremap <silent> ' . s:toggle_ascii_punct_key . ' <cmd>call im#rime#toggle_ascii_punct()<cr>'
+  execute 'inoremap <silent> ' . s:toggle_emoji_key . ' <cmd>call im#rime#toggle_emoji()<cr>'
   execute 'nnoremap <silent> ' . s:toggle_emoji_key . ' <cmd>call im#rime#toggle_emoji()<cr>'
   execute 'inoremap <silent> ' . s:toggle_traditional_key . ' <cmd>call im#rime#toggle_traditional()<cr>'
   execute 'nnoremap <silent> ' . s:toggle_traditional_key . ' <cmd>call im#rime#toggle_traditional()<cr>'
