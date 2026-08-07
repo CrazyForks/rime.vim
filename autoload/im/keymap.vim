@@ -22,7 +22,7 @@ let s:mapped_keys = {
       \ 'symbols' : ['`','-','+','=','!','$','@','#','%','&','^','*','_','(',')','[',']','{','}','<','>','\','/','~',';',':',',','.','?',"'",'"'],
       \ 'numbers': ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
       \ 'specials': ['<bs>', '<s-bs>', '<left>', '<right>', '<up>', '<down>','<c-a>', '<c-e>', '<space>', '<cr>',
-      \ '<tab>', '<s-tab>', '<c-w>', '<c-u>', '<c-n>', '<c-p>', '<pagedown>', '<pageup>']
+      \ '<tab>', '<s-tab>', '<c-w>', '<c-u>', '<c-n>', '<c-p>', '<pagedown>', '<pageup>', '<c-f>', '<c-b>']
       \ }
 
 function! im#keymap#setup() abort"{{{
@@ -58,6 +58,8 @@ function! im#keymap#setup() abort"{{{
 
   lnoremap <expr> <pagedown> im#keymap#pagedown()
   lnoremap <expr> <pageup>  im#keymap#pageup()
+  lnoremap <expr> <c-f> im#keymap#ctrl_f()
+  lnoremap <expr> <c-b> im#keymap#ctrl_b()
 
   doautocmd User RimeKeymapSetup
 endfunction"}}}
@@ -177,4 +179,18 @@ function! im#keymap#ctrl_u() abort"{{{
     return "\<c-u>"
   endif
   return "\<Cmd>call im#key(" . s:keysym.escape . ", 0, \"\\<c-u>\")\<CR>"
+endfunction"}}}
+
+function! im#keymap#ctrl_f() abort"{{{
+  if !im#state#composing()
+    return "\<c-f>"
+  endif
+  return "\<Cmd>call im#key(" . s:keysym.return . ", 0, \"\\<c-f>\")\<CR>"
+endfunction"}}}
+
+function! im#keymap#ctrl_b() abort"{{{
+  if !im#state#composing()
+    return "\<c-b>"
+  endif
+  return "\<Cmd>call im#key(" . s:keysym.return . ", 0, \"\\<c-b>\")\<CR>"
 endfunction"}}}

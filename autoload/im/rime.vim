@@ -127,7 +127,7 @@ function! im#rime#init() abort"{{{
   if has('mac')
     let $RIME_USER_DATA_DIR   = expand(get(g:, 'im_user_data_dir', '~/dotfiles/rime/rime-ice-vim'))
     let $RIME_SHARED_DATA_DIR = get(g:, 'im_shared_data_dir', '/Library/Input Methods/Squirrel.app/Contents/SharedSupport')
-  elseif !empty($WSL_DISTRO_NAME) && has('linux')
+  elseif !empty($WSL_DISTRO_NAME) || has('linux')
     let $RIME_USER_DATA_DIR   = expand(get(g:, 'im_user_data_dir', '~/.local/share/rime-ice'))
     let $RIME_SHARED_DATA_DIR = get(g:, 'im_shared_data_dir', '/usr/share/rime-data')
   elseif has('win32') || has('win64')

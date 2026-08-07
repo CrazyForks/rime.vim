@@ -8,18 +8,21 @@ endfunction"}}}
 
 function! s:vimrc_setup() abort"{{{
   set completeopt=menuone,noinsert
-  set keymap=
-  set iminsert=1
-  set imsearch=0
   let &pumheight = get(g:, 'im_pumheight', 9)
+  " set keymap=
+  " set iminsert=1
+  " set imsearch=0
 endfunction"}}}
 
 function! s:vimrc_restore() abort"{{{
   let &completeopt = s:save_completeopt
   let &pumheight   = s:save_pumheight
-  let &keymap      = s:save_keymap
-  let &iminsert    = s:save_iminsert
-  let &imsearch    = s:save_imsearch
+  " let &keymap      = s:save_keymap
+  " let &iminsert    = s:save_iminsert
+  " let &imsearch    = s:save_imsearch
+  let &keymap = s:save_keymap
+  let &iminsert = s:save_iminsert
+  let &imsearch = s:save_imsearch
 endfunction"}}}
 
 function! s:setup_im_autocmd() abort"{{{
@@ -214,8 +217,9 @@ function! im#enable() abort"{{{
     return
   endif
   call im#keymap#setup()
-  let &l:iminsert = 1
-  let &l:imsearch = 0
+  set keymap=
+  set iminsert=1
+  set imsearch=0
   let state.boundary = -1
   let state.enabled = 1
 endfunction"}}}
@@ -226,6 +230,9 @@ function! im#disable() abort"{{{
     return
   endif
   call im#cancel()
+  " let &keymap = s:save_keymap
+  " let &iminsert = s:save_iminsert
+  " let &imsearch = s:save_imsearch
   call im#keymap#clear()
   let state.boundary = -1
   let state.enabled = 0
@@ -240,6 +247,7 @@ function! im#start() abort"{{{
   if !state.started
     return
   endif
+
   call im#state#init()
   call s:setup_im_autocmd()
   call s:vimrc_save()
