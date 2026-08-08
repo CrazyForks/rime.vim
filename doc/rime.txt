@@ -1,5 +1,5 @@
 *rime.txt*
-                                For NVIM v0.8.0    Last change: 2026 August 06
+                                For NVIM v0.8.0    Last change: 2026 August 08
 
 ==============================================================================
 Table of Contents                                     *rime-table-of-contents*
@@ -41,6 +41,7 @@ TABLE OF CONTENTS                            *rime-rime-vim-table-of-contents*
     - |rime-statusline|
 - |rime-advanced-topics|
     - |rime-rime-ice-configuration-examples|
+    - |rime-making-chinese-editing-smoother|
     - |rime-complementary-plugins|
 - |rime-acknowledgments|
 - |rime-license|
@@ -64,6 +65,7 @@ Key features:
 - Supports full pinyin, double pinyin, nine-grid (T9) and other input schemes
 - Toggle between simplified / traditional, half/full-width punctuation, and emoji
 - Candidate popup / underline rendering; the statusline can show the current input state
+- Provides command-line and terminal input solutions
 
 ------------------------------------------------------------------------------
 
@@ -303,12 +305,45 @@ customize via the corresponding `g:im_*_key`):
   ;a    normal / insert                        Toggle punctuation
   ;f    normal / insert                        Toggle traditional
   ;e    normal / insert                        Toggle emoji
+Keys and key combinations are basically compatible with system-level input
+methods:
+
+  Key          Function
+  ------------ -----------------------------
+  <cr>         Commit pinyin
+  <space>      Select
+  <left>       Move cursor left
+  <right>      Move cursor right
+  <up>         Previous candidate
+  <down>       Next candidate
+  <c-p>        Previous candidate
+  <c-n>        Next candidate
+  <pageup>     Previous page
+  <pagedown>   Next page
+  <->          Previous page
+  <=>          Next page
+  <bs>         Delete one character
+  <s-bs>       Delete one syllable
+  <tab>        Next syllable end
+  <s-tab>      Next syllable start
+  <c-u>        Clear pinyin
+  <c-w>        Delete one syllable
+  <c-a>        Move cursor to pinyin start
+  <c-e>        Move cursor to pinyin end
 ------------------------------------------------------------------------------
 
 INTEGRATION                                        *rime-rime-vim-integration*
 
 
 AUTOCMD ~
+
+**autocmd User RimeKeymapSetup {command}**
+
+Fired after insert-mode key mappings are set up.
+
+**autocmd User RimeKeymapClear {command}**
+
+Fired after insert-mode key mappings are cleared.
 
 **autocmd User RimeIMEnable {command}**
 
@@ -487,6 +522,53 @@ RIME-ICE CONFIGURATION EXAMPLES ~
 <
 
 
+MAKING CHINESE EDITING SMOOTHER ~
+
+If you have ultisnips <https://github.com/SirVer/ultisnips> and bullets.vim
+<https://github.com/bullets-vim/bullets.vim> installed, you can use them like
+this.
+
+>vim
+    function RimeKeymapRemap()
+      if &filetype ==# 'markdown'
+        lnoremap <silent><expr> <tab> im#state#composing() ? "\<cmd>call im#key( 0xff09, 0)\<CR>" :
+              \ UltiSnips#CanJumpForwards() ?
+              \"\<c-r>=UltiSnips#JumpForwards()\<cr>" :  bullet#is_bullet() ?
+              \ "\<C-o>\<Plug>(bullets-demote)\<C-o>$" :  "\<tab>"
+    
+        lnoremap <silent><expr> <s-tab> im#state#composing() ? "\<cmd>call im#key( 0xff09, 1)\<CR>" :
+              \ UltiSnips#CanJumpBackwards() ?
+              \ "\<c-r>=UltiSnips#JumpBackwards()\<cr>" : bullet#is_bullet()?
+              \ "\<C-o>\<Plug>(bullets-promote)\<C-o>$" : "\<s-tab>"
+    
+        lnoremap <silent><expr> <cr> im#state#composing() ? "\<cmd>call im#key( 0xff0d, 0)\<cr>" :
+              \ "\<Plug>(bullets-newline)"
+      else
+        lnoremap <silent><expr> <tab> im#state#composing() ? "\<cmd>call im#key( 0xff09, 0)\<CR>" :
+              \ UltiSnips#CanJumpForwards() ?
+              \"\<c-r>=UltiSnips#JumpForwards()\<cr>" : "\<tab>"
+    
+        lnoremap <silent><expr> <s-tab> im#state#composing() ? "\<cmd>call im#key( 0xff09, 1)\<CR>" :
+              \ UltiSnips#CanJumpBackwards() ?
+              \ "\<c-r>=UltiSnips#JumpBackwards()\<cr>" : "\<s-tab>"
+    
+        lnoremap <silent><expr> <cr> im#state#composing() ? "\<cmd>call im#key( 0xff0d, 0)\<CR>" :
+              \ "\<Plug>(bullets-newline)"
+      endif
+    endfunction
+    
+    function RimeKeymapClear()
+    
+    endfunction
+    
+    augroup RimeGroup
+      autocmd!
+      autocmd User RimeKeymapSetup call RimeKeymapRemap()
+      autocmd User RimeKeymapClear call RimeKeymapClear()
+    augroup END
+<
+
+
 COMPLEMENTARY PLUGINS ~
 
 - jieba.vim <https://github.com/kkew3/jieba.vim> - word-wise navigation of jieba in Vim/Nvim
@@ -511,6 +593,7 @@ MIT
 
 1. *demo*: https://github.com/user-attachments/assets/20978d66-c198-426f-97f1-0ba7322cf656
 2. *demo2*: https://github.com/user-attachments/assets/93d255dd-a9e4-4612-905a-bea1bf0a5501
+3. *demo3*: https://github.com/user-attachments/assets/093e5089-0b8c-4528-854f-5d4aee85328d
 
 Generated by panvimdoc <https://github.com/kdheepak/panvimdoc>
 
