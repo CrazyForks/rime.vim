@@ -115,3 +115,35 @@ function! im#keymap#special(name) abort"{{{
   endif
   return "\<Cmd>call im#key(" . code . ", " . mask . ")\<CR>"
 endfunction"}}}
+
+function! im#keymap#r() abort"{{{
+  let state = im#state#get()
+  if !state.started
+    call feedkeys('r', 'ni')
+    return
+  endif
+
+  let c = getchar()
+  if c == 27 || c == 3 " <Esc> / <C-c>：取消
+    return
+  endif
+
+  let char = type(c) == type(0) ? nr2char(c) : c
+
+  if index(s:mapped_keys.symbols, char) < 0
+    call feedkeys('r' . char, 'ni')
+    return
+  endif
+
+  let ctx = im#rime#key(char2nr(char), 0)
+  let out = (ctx.accepted && !empty(get(ctx, 'committed', ''))) ? ctx.committed : char
+  call im#rime#reset()
+
+  let lnum = line('.')
+  let line = getline(lnum)
+  let cidx = charidx(line, col('.') - 1)
+  let before = strcharpart(line, 0, cidx)
+  let after  = strcharpart(line, cidx + 1)
+  call setline(lnum, before . out . after)
+  call cursor(lnum, byteidx(before, strchars(before)) + 1)
+endfunction"}}}
