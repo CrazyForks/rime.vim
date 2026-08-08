@@ -1,21 +1,43 @@
-let s:keysym = {
-      \ 'bs'       : 0xff08,
-      \ 'left'     : 0xff51,
-      \ 'right'    : 0xff53,
-      \ 'up'       : 0xff52,
-      \ 'down'     : 0xff54,
-      \ 'home'     : 0xff50,
-      \ 'end'      : 0xff57,
-      \ 'tab'      : 0xff09,
-      \ 'pagedown' : 0xff56,
-      \ 'pageup'   : 0xff55,
-      \ 'return'   : 0xff0d,
-      \ 'space'    : 0x0020,
-      \ 'escape'   : 0xff1b
-      \ }
-
 let s:kShiftMask = 1
 let s:kCtrlMask = 4
+
+let s:keys = {
+      \ 'bs'      : [0xff08, 0,            "\<bs>"],
+      \ 's-bs'    : [0xff08, s:kShiftMask, "\<bs>"],
+      \ 'left'    : [0xff51, 0,            "\<left>"],
+      \ 'right'   : [0xff53, 0,            "\<right>"],
+      \ 'up'      : [0xff52, 0,            "\<up>"],
+      \ 'down'    : [0xff54, 0,            "\<down>"],
+      \ 'home'    : [0xff50, 0,            "\<home>"],
+      \ 'end'     : [0xff57, 0,            "\<end>"],
+      \ 'tab'     : [0xff09, 0,            "\<tab>"],
+      \ 's-tab'   : [0xff09, s:kShiftMask, "\<s-tab>"],
+      \ 'pagedown': [0xff56, 0,            "\<pagedown>"],
+      \ 'pageup'  : [0xff55, 0,            "\<pageup>"],
+      \ 'return'  : [0xff0d, 0,            "\<cr>"],
+      \ 'space'   : [0x0020, 0,            "\<space>"],
+      \ 'c-u'     : [0x75,   s:kCtrlMask,  "\<c-u>"],
+      \ 'c-f'     : [0x66,   s:kCtrlMask,  "\<c-f>"],
+      \ 'c-b'     : [0x62,   s:kCtrlMask,  "\<c-b>"],
+      \ }
+
+" key -> 回放字符串 反查表，由 s:keys 生成，
+" 键为 "code:mask"（如 "65293:0"、"65289:1"）。
+let s:keysym = {}
+for [key, entry] in items(s:keys)
+  let s:keysym[entry[0] . ':' . entry[1]] = entry[2]
+endfor
+
+function! im#keymap#fallback(keycode, mask) abort"{{{
+  let literal = get(s:keysym, a:keycode . ':' . a:mask, '')
+  if literal !=# ''
+    return literal
+  endif
+  if a:mask == s:kCtrlMask && nr2char(a:keycode) =~# '^[a-z]$'
+    return '\<c-' . nr2char(a:keycode) . '>'
+  endif
+  return a:keycode >= 0x20 ? nr2char(a:keycode) : ''
+endfunction"}}}
 
 let s:mapped_keys = {
       \ 'letters': split('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', '\zs'),
@@ -27,39 +49,37 @@ let s:mapped_keys = {
 
 function! im#keymap#setup() abort"{{{
   for key in s:mapped_keys.letters
-    execute 'lnoremap <expr> ' . key . ' im#keymap#letter(' . string(key) . ')'
+    execute 'lnoremap <expr> ' . key . ' im#keymap#char(' . string(key) . ')'
   endfor
 
   for key in s:mapped_keys.symbols
-    execute 'lnoremap <expr> ' . key . ' im#keymap#symbol(' . string(key) . ')'
+    execute 'lnoremap <expr> ' . key . ' im#keymap#char(' . string(key) . ')'
   endfor
 
-  for i in range(len(s:mapped_keys.numbers))
-    let key = s:mapped_keys.numbers[i]
-    execute 'lnoremap <expr> ' . key . ' im#keymap#digit(' . string(key) . ')'
+  for key in s:mapped_keys.numbers
+    execute 'lnoremap <expr> ' . key . ' im#keymap#char(' . string(key) . ')'
   endfor
 
-  lnoremap <expr> <bs>    im#keymap#backspace()
-  lnoremap <expr> <s-bs>  im#keymap#shift_backspace()
-  lnoremap <expr> <c-u>   im#keymap#ctrl_u()
-  lnoremap <expr> <c-w>   im#keymap#shift_backspace()
-  lnoremap <expr> <left>  im#keymap#move('left')
-  lnoremap <expr> <right> im#keymap#move('right')
-  lnoremap <expr> <up>  im#keymap#move('up')
-  lnoremap <expr> <down> im#keymap#move('down')
-  lnoremap <expr> <c-n>  im#keymap#move('up')
-  lnoremap <expr> <c-p> im#keymap#move('down')
-  lnoremap <expr> <c-a>   im#keymap#move('home')
-  lnoremap <expr> <c-e>   im#keymap#move('end')
-  lnoremap <expr> <space> im#keymap#space()
-  lnoremap <expr> <cr>    im#keymap#return()
-  lnoremap <expr> <tab>   im#keymap#tab()
-  lnoremap <expr> <s-tab> im#keymap#shift_tab()
-
-  lnoremap <expr> <pagedown> im#keymap#pagedown()
-  lnoremap <expr> <pageup>  im#keymap#pageup()
-  lnoremap <expr> <c-f> im#keymap#ctrl_f()
-  lnoremap <expr> <c-b> im#keymap#ctrl_b()
+  lnoremap <expr> <bs>       im#keymap#special('bs')
+  lnoremap <expr> <s-bs>     im#keymap#special('s-bs')
+  lnoremap <expr> <c-u>      im#keymap#special('c-u')
+  lnoremap <expr> <c-w>      im#keymap#special('s-bs')
+  lnoremap <expr> <left>     im#keymap#special('left')
+  lnoremap <expr> <right>    im#keymap#special('right')
+  lnoremap <expr> <up>       im#keymap#special('up')
+  lnoremap <expr> <down>     im#keymap#special('down')
+  lnoremap <expr> <c-n>      im#keymap#special('up')
+  lnoremap <expr> <c-p>      im#keymap#special('down')
+  lnoremap <expr> <c-a>      im#keymap#special('home')
+  lnoremap <expr> <c-e>      im#keymap#special('end')
+  lnoremap <expr> <space>    im#keymap#special('space')
+  lnoremap <expr> <cr>       im#keymap#special('return')
+  lnoremap <expr> <tab>      im#keymap#special('tab')
+  lnoremap <expr> <s-tab>    im#keymap#special('s-tab')
+  lnoremap <expr> <pagedown> im#keymap#special('pagedown')
+  lnoremap <expr> <pageup>   im#keymap#special('pageup')
+  lnoremap <expr> <c-f>      im#keymap#special('c-f')
+  lnoremap <expr> <c-b>      im#keymap#special('c-b')
 
   doautocmd User RimeKeymapSetup
 endfunction"}}}
@@ -81,116 +101,17 @@ function! s:begin_composition() abort"{{{
   let state.sel_end     = 0
 endfunction"}}}
 
-function! im#keymap#letter(char) abort"{{{
+function! im#keymap#char(char) abort"{{{
   if !im#state#composing()
     call s:begin_composition()
   endif
-  return "\<Cmd>call im#key(" . char2nr(a:char) . ", 0, " . string(a:char) . ")\<CR>"
+  return "\<Cmd>call im#key(" . char2nr(a:char) . ", 0)\<CR>"
 endfunction"}}}
 
-function! im#keymap#symbol(char) abort"{{{
+function! im#keymap#special(name) abort"{{{
+  let [code, mask, literal] = s:keys[a:name]
   if !im#state#composing()
-    call s:begin_composition()
+    return literal
   endif
-  return "\<Cmd>call im#key(" . char2nr(a:char) . ", 0, " . string(a:char) . ")\<CR>"
-endfunction"}}}
-
-function! im#keymap#digit(char) abort"{{{
-  if !im#state#composing()
-    call s:begin_composition()
-  endif
-  return "\<Cmd>call im#key(" . char2nr(a:char) . ", 0, " . string(a:char) . ")\<CR>"
-endfunction"}}}
-
-function! im#keymap#backspace() abort"{{{
-  if !im#state#composing()
-    return "\<bs>"
-  endif
-  return "\<Cmd>call im#key(" . s:keysym.bs . ", 0, \"\\<bs>\")\<CR>"
-endfunction"}}}
-
-function! im#keymap#shift_backspace() abort"{{{
-  if !im#state#composing()
-    return "\<bs>"
-  endif
-  return "\<Cmd>call im#key(" . s:keysym.bs . ", " . s:kShiftMask . ", \"\\<bs>\")\<CR>"
-endfunction"}}}
-
-function! im#keymap#move(direction) abort"{{{
-  let move_fallback = {
-        \ 'left'  : "\<left>",
-        \ 'right' : "\<right>",
-        \ 'up'    : "\<up>",
-        \ 'down'  : "\<down>",
-        \ 'home'  : "\<home>",
-        \ 'end'   : "\<end>",
-        \ }
-  if !im#state#composing()
-    return move_fallback[a:direction]
-  endif
-
-  return "\<Cmd>call im#key(" . s:keysym[a:direction] . ", 0, " . string(move_fallback[a:direction]) . ")\<CR>"
-endfunction"}}}
-
-function! im#keymap#space() abort"{{{
-  if !im#state#composing()
-    return "\<space>"
-  endif
-  return "\<Cmd>call im#key(" . s:keysym.space . ", 0, \"\\<space>\")\<CR>"
-endfunction"}}}
-
-function! im#keymap#return() abort"{{{
-  if !im#state#composing()
-    return "\<cr>"
-  endif
-  return "\<Cmd>call im#key(" . s:keysym.return . ", 0, \"\\<cr>\")\<CR>"
-endfunction"}}}
-
-function! im#keymap#tab() abort"{{{
-  if !im#state#composing()
-    return "\<tab>"
-  endif
-  return "\<Cmd>call im#key(" . s:keysym.tab . ", 0, \"\\<tab>\")\<CR>"
-endfunction"}}}
-
-function! im#keymap#shift_tab() abort"{{{
-  if !im#state#composing()
-    return "\<s-tab>"
-  endif
-  return "\<Cmd>call im#key(" . s:keysym.tab . ", " . s:kShiftMask . ", \"\\<s-tab>\")\<CR>"
-endfunction"}}}
-
-function! im#keymap#pagedown() abort"{{{
-  if !im#state#composing()
-    return "\<tab>"
-  endif
-  return "\<Cmd>call im#key(" . s:keysym.pagedown . ", 0, \"\\<pagedown>\")\<CR>"
-endfunction"}}}
-
-function! im#keymap#pageup() abort"{{{
-  if !im#state#composing()
-    return "\<tab>"
-  endif
-  return "\<Cmd>call im#key(" . s:keysym.pageup . ", 0, \"\\<pageup>\")\<CR>"
-endfunction"}}}
-
-function! im#keymap#ctrl_u() abort"{{{
-  if !im#state#composing()
-    return "\<c-u>"
-  endif
-  return "\<Cmd>call im#key(" . s:keysym.escape . ", 0, \"\\<c-u>\")\<CR>"
-endfunction"}}}
-
-function! im#keymap#ctrl_f() abort"{{{
-  if !im#state#composing()
-    return "\<c-f>"
-  endif
-  return "\<Cmd>call im#key(" . s:keysym.return . ", 0, \"\\<c-f>\")\<CR>"
-endfunction"}}}
-
-function! im#keymap#ctrl_b() abort"{{{
-  if !im#state#composing()
-    return "\<c-b>"
-  endif
-  return "\<Cmd>call im#key(" . s:keysym.return . ", 0, \"\\<c-b>\")\<CR>"
+  return "\<Cmd>call im#key(" . code . ", " . mask . ")\<CR>"
 endfunction"}}}

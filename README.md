@@ -20,7 +20,8 @@
   - [Statusline](#statusline)
 - [高级主题](#高级主题)
   - [rime-ice 配置示例](#rime-ice-配置示例)
-  - [配套插件](#配套插件)
+  - [让中文编辑更加丝滑](#让中文编辑更加丝滑)
+  - [其他搭配插件](#其他搭配插件)
 - [致谢](#致谢)
 - [License](#license)
 
@@ -267,14 +268,23 @@ export RIME_SHARED_DATA_DIR="/usr/share/rime-data"
 | `<s-bs>`     | 删除一个音节       |
 | `<tab>`      | 下一个音节结尾     |
 | `<s-tab>`    | 下一个音节开头     |
-| `<c-u>`      | 清空本次组字       |
+| `<c-u>`      | 清空拼音           |
 | `<c-w>`      | 删除一个音节       |
-| `<c-a>`      | 光标移动到组字开头 |
-| `<c-e>`      | 光标移动到组字结尾 |
+| `<c-a>`      | 光标移动到拼音开头 |
+| `<c-e>`      | 光标移动到拼音结尾 |
 
 ## 集成
 
 ### Autocmd
+
+
+**`autocmd User RimeKeymapSetup {command}`**
+
+插入模式按键映射建立后触发。
+
+**`autocmd User RimeKeymapClear {command}`**
+
+插入模式按键映射清除后触发。
 
 **`autocmd User RimeIMEnable {command}`**
 
@@ -442,7 +452,52 @@ patch:
     - xlit/ⓆⓌⓇⓉⓎⓊⒾⓄⓅⓈⒹⒻⒼⒽⒿⓀⓁⓏⓍⒸⓋⒷⓃⓂ/qwrtyuiopsdfghjklzxcvbnm/
 ```
 
-### 配套插件
+### 让中文编辑更加丝滑
+
+如果你安装了 [ultisnips](https://github.com/SirVer/ultisnips) 和 [bullets.vim](https://github.com/bullets-vim/bullets.vim)，你可以这样使用。
+
+```vim
+function RimeKeymapRemap()
+  if &filetype ==# 'markdown'
+    lnoremap <silent><expr> <tab> im#state#composing() ? "\<cmd>call im#key( 0xff09, 0)\<CR>" :
+          \ UltiSnips#CanJumpForwards() ?
+          \"\<c-r>=UltiSnips#JumpForwards()\<cr>" :  bullet#is_bullet() ?
+          \ "\<C-o>\<Plug>(bullets-demote)\<C-o>$" :  "\<tab>"
+
+    lnoremap <silent><expr> <s-tab> im#state#composing() ? "\<cmd>call im#key( 0xff09, 1)\<CR>" :
+          \ UltiSnips#CanJumpBackwards() ?
+          \ "\<c-r>=UltiSnips#JumpBackwards()\<cr>" : bullet#is_bullet()?
+          \ "\<C-o>\<Plug>(bullets-promote)\<C-o>$" : "\<s-tab>"
+
+    lnoremap <silent><expr> <cr> im#state#composing() ? "\<cmd>call im#key( 0xff0d, 0)\<cr>" :
+          \ "\<Plug>(bullets-newline)"
+  else
+    lnoremap <silent><expr> <tab> im#state#composing() ? "\<cmd>call im#key( 0xff09, 0)\<CR>" :
+          \ UltiSnips#CanJumpForwards() ?
+          \"\<c-r>=UltiSnips#JumpForwards()\<cr>" : "\<tab>"
+
+    lnoremap <silent><expr> <s-tab> im#state#composing() ? "\<cmd>call im#key( 0xff09, 1)\<CR>" :
+          \ UltiSnips#CanJumpBackwards() ?
+          \ "\<c-r>=UltiSnips#JumpBackwards()\<cr>" : "\<s-tab>"
+
+    lnoremap <silent><expr> <cr> im#state#composing() ? "\<cmd>call im#key( 0xff0d, 0)\<CR>" :
+          \ "\<Plug>(bullets-newline)"
+  endif
+endfunction
+
+function RimeKeymapClear()
+
+endfunction
+
+augroup RimeGroup
+  autocmd!
+  autocmd User RimeKeymapSetup call RimeKeymapRemap()
+  autocmd User RimeKeymapClear call RimeKeymapClear()
+augroup END
+```
+![demo3](https://github.com/user-attachments/assets/093e5089-0b8c-4528-854f-5d4aee85328d)
+
+### 其他搭配插件
 
 - [jieba.vim](https://github.com/kkew3/jieba.vim) — jieba 的 Vim/Nvim 按词跳转插件
 - [pangu.vim](https://github.com/hotoo/pangu.vim) — 中文排版自动规范化的 Vim 插件

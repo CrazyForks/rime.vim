@@ -21,6 +21,7 @@ A Chinese input method (Rime / ㄓ) solution for Vim and Neovim, based on the
   - [Statusline](#statusline)
 - [Advanced Topics](#advanced-topics)
   - [rime-ice configuration examples](#rime-ice-configuration-examples)
+  - [Making Chinese editing smoother](#making-chinese-editing-smoother)
   - [Complementary plugins](#complementary-plugins)
 - [Acknowledgments](#acknowledgments)
 - [License](#license)
@@ -45,6 +46,7 @@ Key features:
 - Supports full pinyin, double pinyin, nine-grid (T9) and other input schemes
 - Toggle between simplified / traditional, half/full-width punctuation, and emoji
 - Candidate popup / underline rendering; the statusline can show the current input state
+- Provides command-line and terminal input solutions
 
 ---
 
@@ -269,11 +271,45 @@ customize via the corresponding `g:im_*_key`):
 | `;f`| normal / insert                     | Toggle traditional     |
 | `;e`| normal / insert                      | Toggle emoji           |
 
+Keys and key combinations are basically compatible with system-level input
+methods:
+
+| Key          | Function                     |
+| ------------ | ---------------------------- |
+| `<cr>`       | Commit pinyin                |
+| `<space>`    | Select                       |
+| `<left>`     | Move cursor left             |
+| `<right>`    | Move cursor right            |
+| `<up>`       | Previous candidate           |
+| `<down>`     | Next candidate               |
+| `<c-p>`      | Previous candidate           |
+| `<c-n>`      | Next candidate               |
+| `<pageup>`   | Previous page                |
+| `<pagedown>` | Next page                    |
+| `<->`        | Previous page                |
+| `<=>`        | Next page                    |
+| `<bs>`       | Delete one character         |
+| `<s-bs>`     | Delete one syllable          |
+| `<tab>`      | Next syllable end            |
+| `<s-tab>`    | Next syllable start          |
+| `<c-u>`      | Clear pinyin                 |
+| `<c-w>`      | Delete one syllable          |
+| `<c-a>`      | Move cursor to pinyin start  |
+| `<c-e>`      | Move cursor to pinyin end    |
+
 ---
 
 ## Integration
 
 ### Autocmd
+
+**`autocmd User RimeKeymapSetup {command}`**
+
+Fired after insert-mode key mappings are set up.
+
+**`autocmd User RimeKeymapClear {command}`**
+
+Fired after insert-mode key mappings are cleared.
 
 **`autocmd User RimeIMEnable {command}`**
 
@@ -448,6 +484,53 @@ patch:
     - derive/in$/Ⓑ/
     - xlit/ⓆⓌⓇⓉⓎⓊⒾⓄⓅⓈⒹⒻⒼⒽⒿⓀⓁⓏⓍⒸⓋⒷⓃⓂ/qwrtyuiopsdfghjklzxcvbnm/
 ```
+
+### Making Chinese editing smoother
+
+If you have [ultisnips](https://github.com/SirVer/ultisnips) and
+[bullets.vim](https://github.com/bullets-vim/bullets.vim) installed, you can use
+them like this.
+
+```vim
+function RimeKeymapRemap()
+  if &filetype ==# 'markdown'
+    lnoremap <silent><expr> <tab> im#state#composing() ? "\<cmd>call im#key( 0xff09, 0)\<CR>" :
+          \ UltiSnips#CanJumpForwards() ?
+          \"\<c-r>=UltiSnips#JumpForwards()\<cr>" :  bullet#is_bullet() ?
+          \ "\<C-o>\<Plug>(bullets-demote)\<C-o>$" :  "\<tab>"
+
+    lnoremap <silent><expr> <s-tab> im#state#composing() ? "\<cmd>call im#key( 0xff09, 1)\<CR>" :
+          \ UltiSnips#CanJumpBackwards() ?
+          \ "\<c-r>=UltiSnips#JumpBackwards()\<cr>" : bullet#is_bullet()?
+          \ "\<C-o>\<Plug>(bullets-promote)\<C-o>$" : "\<s-tab>"
+
+    lnoremap <silent><expr> <cr> im#state#composing() ? "\<cmd>call im#key( 0xff0d, 0)\<cr>" :
+          \ "\<Plug>(bullets-newline)"
+  else
+    lnoremap <silent><expr> <tab> im#state#composing() ? "\<cmd>call im#key( 0xff09, 0)\<CR>" :
+          \ UltiSnips#CanJumpForwards() ?
+          \"\<c-r>=UltiSnips#JumpForwards()\<cr>" : "\<tab>"
+
+    lnoremap <silent><expr> <s-tab> im#state#composing() ? "\<cmd>call im#key( 0xff09, 1)\<CR>" :
+          \ UltiSnips#CanJumpBackwards() ?
+          \ "\<c-r>=UltiSnips#JumpBackwards()\<cr>" : "\<s-tab>"
+
+    lnoremap <silent><expr> <cr> im#state#composing() ? "\<cmd>call im#key( 0xff0d, 0)\<CR>" :
+          \ "\<Plug>(bullets-newline)"
+  endif
+endfunction
+
+function RimeKeymapClear()
+
+endfunction
+
+augroup RimeGroup
+  autocmd!
+  autocmd User RimeKeymapSetup call RimeKeymapRemap()
+  autocmd User RimeKeymapClear call RimeKeymapClear()
+augroup END
+```
+![demo3](https://github.com/user-attachments/assets/093e5089-0b8c-4528-854f-5d4aee85328d)
 
 ### Complementary plugins
 

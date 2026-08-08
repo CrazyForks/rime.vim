@@ -157,9 +157,11 @@ function! im#type(char) abort"{{{
 
 endfunction"}}}
 
-function! im#key(keycode, mask, fallback) abort"{{{
+function! im#key(keycode, mask, ...) abort"{{{
   let state = im#state#get()
   let ctx = im#rime#key(a:keycode, a:mask)
+
+  let fallback = a:0 ? a:1 : im#keymap#fallback(a:keycode, a:mask)
 
   " librime reject 上屏
   if !ctx.accepted
@@ -177,7 +179,7 @@ function! im#key(keycode, mask, fallback) abort"{{{
       call complete(col('.'), [])
     endif
     call im#state#reset_input()
-    call feedkeys(a:fallback, 'ni')
+    call feedkeys(fallback, 'ni')
     return
   else
     " 组词结束上屏
