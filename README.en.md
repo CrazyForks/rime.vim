@@ -514,9 +514,6 @@ function RimeKeymapRemap()
     lnoremap <silent><expr> <s-tab> im#state#composing() ? "\<cmd>call im#key( 0xff09, 1)\<CR>" :
           \ UltiSnips#CanJumpBackwards() ?
           \ "\<c-r>=UltiSnips#JumpBackwards()\<cr>" : "\<s-tab>"
-
-    lnoremap <silent><expr> <cr> im#state#composing() ? "\<cmd>call im#key( 0xff0d, 0)\<CR>" :
-          \ "\<Plug>(bullets-newline)"
   endif
 endfunction
 
