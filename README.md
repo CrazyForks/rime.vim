@@ -1,6 +1,13 @@
-# rime vim
+ <p align="center">
+  <img alt="Logo" src="./icon.png" height="200" />
+  <p align="center">Rime input method support for Vim/Neovim</p>
+  <p align="center">
+    <a href="https://opensource.org/licenses/MIT"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square"></a>
+    <a href="https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity"><img alt="Maintenance" src="https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=flat-square"></a>
+  </p>
+</p>
 
-基于 [rime-ice](https://github.com/iDvelve/rime-ice) 方案的中文输入解决方案（Rime / ㄓ），面向 Vim 与 Neovim。
+---
 
 ## 目录
 
@@ -262,8 +269,8 @@ export RIME_SHARED_DATA_DIR="/usr/share/rime-data"
 | `<c-n>`      | 下一个候选         |
 | `<pageup>`   | 上一页             |
 | `<pagedown>` | 下一页             |
-| `<->`        | 上一页             |
-| `<=>`        | 下一页             |
+| `-`          | 上一页             |
+| `=`          | 下一页             |
 | `<bs>`       | 删除一个字符       |
 | `<s-bs>`     | 删除一个音节       |
 | `<tab>`      | 下一个音节结尾     |
@@ -276,7 +283,6 @@ export RIME_SHARED_DATA_DIR="/usr/share/rime-data"
 ## 集成
 
 ### Autocmd
-
 
 **`autocmd User RimeKeymapSetup {command}`**
 
@@ -492,7 +498,18 @@ augroup RimeGroup
   autocmd User RimeKeymapClear call RimeKeymapClear()
 augroup END
 ```
+
 ![demo3](https://github.com/user-attachments/assets/093e5089-0b8c-4528-854f-5d4aee85328d)
+
+### 在 Replace Mode 中使用
+
+以下功能还处于实验性阶段。
+
+- 重映射 `r`，支持半角和全角切换。
+
+```vim
+nnoremap r <Cmd>call im#keymap#r()<CR>
+```
 
 ### 其他搭配插件
 
