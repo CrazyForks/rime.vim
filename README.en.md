@@ -56,7 +56,7 @@ Key features:
 
 - Vim >= 8.2.1978 or Neovim
 - librime (required to build the backend)
-- Rime shared data directory (e.g. [rime-ice](https://github.com/iDvelve/rime-ice)) and a user data directory
+- Rime shared data directory and a user data directory (e.g. [rime-ice](https://github.com/iDvelve/rime-ice))
 
 ### Installation
 
