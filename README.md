@@ -32,6 +32,27 @@
 - [致谢](#致谢)
 - [License](#license)
 
+<detail>
+<summary>写在最前面</summary>
+
+对于常见的问题的统一回答。
+
+- 是否会跟系统的 rime 输入法 产生冲突？
+
+  ```answer
+  会产生冲突，建议新建一个目录，存放你的拼音方案，也就是你的「用户数据目录」最好不要跟系统输入法的是同一目录。
+  ```
+
+- 这个插件在有系统输入法的情况下，存在的意义。
+
+  ```answer
+  在 vim/neovim 中编辑中文的目前的大问题是模式切换过程中，系统输入法不会根据编辑器所处模式，切换到对应的状态（比如 normal 模式下帮你切换到英文模式）。目前网络上提供的解决方案，大多都是通过拦截 <ESC> 进行切换，但 vim 中发生模式切换 不仅只有按 <ESC>，在 Command 模式，甚至是 Terminal 模式 按 <Enter> 也会进入 Normal 模式，比如在 fzf 中输入中文、搜索、替换等情况。
+
+  我下面给出的解决方案是整合了我收集到解决方法，尽可能提高中文输入在 vim 中体验。当然，在某些情况下输入中文并不是最优解，比如文件搜索，如果能把文件名拼音化，能提高文件的搜索和切换效率。
+  ```
+</detail>
+
+
 ## 简介
 
 Rime（中州韵）输入法在 Vim / Neovim 中的集成方案，基于 [rime-ice](https://github.com/iDvelve/rime-ice) 词库，同时支持 Vim（>= 8.2.1978）与 Neovim。
@@ -168,7 +189,7 @@ let g:im_option_traditional        = 0
 " 在 Cmdline 中使用
 function! IMCmdEdit()
     let cmdtype = getcmdtype()
-    if cmdtype != ':' && cmdtype != '/'
+    if cmdtype != ':' && cmdtype != '/' && cmdtype != '?'
         return ''
     endif
 
