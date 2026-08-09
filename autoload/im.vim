@@ -175,9 +175,9 @@ function! im#key(keycode, mask, ...) abort"{{{
       call setline(lnum, before . committed . after)
 
       call cursor(line('.'), state.boundary + strlen(committed))
-      call im#underline#clean()
       call complete(col('.'), [])
     endif
+    call im#underline#clean()
     call im#state#reset_input()
     call feedkeys(fallback, 'ni')
     return
