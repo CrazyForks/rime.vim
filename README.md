@@ -121,12 +121,15 @@ clang++ -std=c++17 -I./3rd -I/path/to/librime/include -L/path/to/librime/lib -lr
 
 ### 选项
 
+> [!Tip]
+> 以雾凇拼音（rime-ice） 为例，如果你系统中已安装了「鼠须管」或者「小狼毫」，用户数据目录可以新建一个，避免产生冲突。 
+
 以下均为常用 `g:` 变量，可省略（使用默认值）。请在 vimrc 中、插件加载**之前**设置：
 
 ```vim
 " rime-query 可执行文件路径（需在 PATH 中）
 let g:im_rime_bin                  = 'rime-query'
-" 用户数据目录（$RIME_USER_DATA_DIR）
+" 用户数据目录，也就是你的拼音方案安装的目录（$RIME_USER_DATA_DIR）
 let g:im_user_data_dir             = '/path/to/rime'
 " 共享数据目录（$RIME_SHARED_DATA_DIR）
 let g:im_shared_data_dir           = '/usr/share/rime-data'
