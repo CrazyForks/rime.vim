@@ -148,6 +148,25 @@ function! im#rime#start() abort"{{{
     return 0
   endif
 
+  let other = []
+  if has('win32') || has('win64')
+    let bin = fnamemodify(g:im_rime_bin, ':t') . '.exe'
+    let lines = systemlist('tasklist /FI "IMAGENAME eq ' . bin . '" /FO CSV /NH')
+    call filter(lines, 'stridx(tolower(v:val), tolower("' . bin . '")) > -1')
+    let other = lines
+  elseif has('unix')
+    let other = systemlist('pgrep -x ' . shellescape(fnamemodify(g:im_rime_bin, ':t')))
+  endif
+
+  " if len(other) > 0
+  "   echohl WarningMsg
+  "   echom '[IM] another rime-query already running; multi-instance word-frequency may silently reset'
+  "   echohl None
+  " endif
+
+  let state = im#state#get()
+  let state.locked = len(other) > 0 ? 1 : 0
+
   let s:job = s:job_start([g:im_rime_bin])
   if s:job is v:null
     echohl WarningMsg

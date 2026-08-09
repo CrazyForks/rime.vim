@@ -39,6 +39,7 @@ endfunction
 augroup im_lifecycle
   autocmd!
   autocmd VimEnter    * call im#rime#start()
+  autocmd VimLeavePre * call im#rime#stop()
   autocmd User RimeIMEnable  call im#hooks#on_enable()
   autocmd User RimeIMDisable call im#hooks#on_disable()
   " autocmd InsertEnter * call im#on_insert_enter()

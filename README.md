@@ -31,6 +31,17 @@
   我下面给出的解决方案是整合了我收集到解决方法，尽可能提高中文输入在 vim 中体验。当然，在某些情况下输入中文
   并不是最优解，比如文件搜索，如果能把文件名拼音化，能提高文件的搜索和切换效率。
   ```
+
+- 为什么没有词频功能会失效？
+
+  ```answer
+  每个 Vim / Neovim 实例都会各自启动一个独立的 rime-query 后端进程，而所有实例共享同一个用户词库目录
+  （`g:im_user_data_dir`）。用户词库（*.userdb 目录）是 LevelDB 单写者存储，同一时刻只允许一个进程
+  持有写锁：当另一个实例先启动并占用了词库时，后启动的实例会抢不到锁，librime 会静默地挪走旧词库目录并
+  新建空库，表现为「词频丢失、候选词排序回到默认」。
+
+  建议同时只保留一个编辑器会话；或为不同编辑器分别配置独立的 `g:im_user_data_dir`，避免词库互相覆盖。
+  ```
 </details>
 
 ---
@@ -187,6 +198,8 @@ let g:im_status_full_text          = '全'
 let g:im_status_simplified_text    = '简'
 " 繁体状态文本
 let g:im_status_traditional_text   = '繁'
+" 词库被其他实例占用时的锁定提示图标
+let g:im_status_locked_text        = '!'
 " 初始标点状态（1 为半角）
 let g:im_option_ascii_punct        = 0
 " 初始简繁状态（1 为繁体）

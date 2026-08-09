@@ -17,6 +17,7 @@ let s:state = {
       \ 'emoji'           : 0,
       \ 'full_shape'      : 0,
       \ 'traditional'     : 0,
+      \ 'locked'          : 0,
       \ 'ns_id'           : 0,
       \ 'mark_id'         : 0,
       \ 'match_id'        : 0,

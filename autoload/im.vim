@@ -308,8 +308,10 @@ function! im#status() abort"{{{
   let icon_full = get(g:, 'im_status_full_text', '全')
   let icon_simplified = get(g:, 'im_status_simplified_text', '简')
   let icon_traditional = get(g:, 'im_status_traditional_text', '繁')
+  let icon_lock = get(g:, 'im_status_lock_text', '!')
+  let locked = state.locked ?  icon_lock : ""
   let punct = state.ascii_punct ? icon_half : icon_full
   let trad = state.traditional ? icon_traditional : icon_simplified
-  return state.started ? "[" . icon . "]" . punct . '|' . trad  : ''
+  return state.started ? locked . "[" . icon . "]" . punct . '|' . trad  : ''
 endfunction"}}}
 
