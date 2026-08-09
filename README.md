@@ -54,7 +54,7 @@ Rime（中州韵）输入法在 Vim / Neovim 中的集成方案，基于 [rime-i
 
 - Vim >= 8.2.1978 或 Neovim
 - librime（编译后端所必需）
-- Rime 共享数据目录（例如 [rime-ice](https://github.com/iDvelve/rime-ice)）与用户数据目录
+- Rime 共享数据目录与用户数据目录（例如 [rime-ice](https://github.com/iDvelve/rime-ice)）
 
 ### 安装
 
