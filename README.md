@@ -1,4 +1,4 @@
- <p align="center">
+<p align="center">
   <img alt="Logo" src="./icon.png" height="200" />
   <p align="center">Rime input method support for Vim/Neovim</p>
   <p align="center">

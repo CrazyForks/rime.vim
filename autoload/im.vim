@@ -89,6 +89,8 @@ function! s:redraw(ctx) abort"{{{
         call feedkeys(repeat("\<up>", -delta), 'ni')
       endif
     endif
+  else
+    call complete(state.boundary, [])
   endif
 
   let state.last_candidates = words
