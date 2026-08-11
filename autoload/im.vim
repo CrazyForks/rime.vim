@@ -252,12 +252,12 @@ function! im#start() abort"{{{
     return
   endif
 
+  doautocmd User RimeIMEnable
   call im#state#init()
   call s:setup_im_autocmd()
   call s:vimrc_save()
   call s:vimrc_setup()
   call im#enable()
-  doautocmd User RimeIMEnable
   echo '[IM] on'
   redrawstatus
   return
