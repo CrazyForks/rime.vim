@@ -1,5 +1,5 @@
 *rime.txt*
-                                For NVIM v0.8.0    Last change: 2026 August 09
+                                For NVIM v0.8.0    Last change: 2026 August 11
 
 ==============================================================================
 Table of Contents                                     *rime-table-of-contents*
@@ -299,6 +299,23 @@ COMMANDS ~
 
   :IMSync     Sync the user dictionary, then redeploy
   ------------------------------------------------------------------------
+
+REDEPLOYING
+
+After editing the configuration in your user data directory (e.g. `schema_list`
+/ `page_size` in `default.custom.yaml`), run `:IMDeploy` to apply the changes.
+The editor briefly blocks during deployment; tune the timeout with
+`g:im_deploy_timeout` (ms).
+
+
+SYNCING THE USER DICTIONARY
+
+`:IMSync` first merges your user dictionary (`*.userdb/`) with the
+`sync/<installation_id>/*.userdb.txt` backups in both directions, then
+redeploys. This makes it easy to sync personal word frequency across devices
+and platforms; on multiple devices it is recommended to set the same
+`installation_id` in `installation.yaml`, otherwise the merge may fail.
+
 
 KEY MAPPINGS ~
 
