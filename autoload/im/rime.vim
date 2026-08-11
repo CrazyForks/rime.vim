@@ -150,10 +150,7 @@ function! im#rime#start() abort"{{{
 
   let other = []
   if has('win32') || has('win64')
-    let bin = fnamemodify(g:im_rime_bin, ':t') . '.exe'
-    let lines = systemlist('tasklist /FI "IMAGENAME eq ' . bin . '" /FO CSV /NH')
-    call filter(lines, 'stridx(tolower(v:val), tolower("' . bin . '")) > -1')
-    let other = lines
+    let other = systemlist('pgrep -x ' . shellescape(fnamemodify(g:im_rime_bin, ':t')))
   elseif has('unix')
     let other = systemlist('pgrep -x ' . shellescape(fnamemodify(g:im_rime_bin, ':t')))
   endif
@@ -312,6 +309,10 @@ endfunction"}}}
 
 function! im#rime#apply_initial_options() abort"{{{
   let state = im#state#get()
+  if exists('g:im_option_ascii_mode')
+    let value = im#rime#set_option('ascii_punct', get(g:, 'im_option_ascii_mode', 0))
+  endif
+
   if exists('g:im_option_ascii_punct')
     let value = im#rime#set_option('ascii_punct', get(g:, 'im_option_ascii_punct', 0))
   endif
@@ -334,6 +335,23 @@ function! im#rime#toggle_traditional() abort"{{{
     return
   endif
   let state.traditional = value ? 1 : 0
+  redrawstatus
+endfunction"}}}
+
+
+function! im#rime#toggle_ascii_mode() abort"{{{
+  let state = im#state#get()
+  if !state.started
+    return
+  endif
+  let value = im#rime#toggle_option('ascii_mode')
+  if value is v:null
+    echohl WarningMsg
+    echom '[IM] failed to toggle ascii_mode (backend not responding?)'
+    echohl None
+    return
+  endif
+  let state.ascii_mode = value ? 1 : 0
   redrawstatus
 endfunction"}}}
 

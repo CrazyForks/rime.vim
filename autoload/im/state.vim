@@ -13,6 +13,7 @@ let s:state = {
       \ 'last_candidates' : [],
       \ 'last_preedit'    : '',
       \ 'last_hl'         : 0,
+      \ 'ascii_mode'      : 0,
       \ 'ascii_punct'     : 0,
       \ 'emoji'           : 0,
       \ 'full_shape'      : 0,
@@ -53,6 +54,7 @@ function! im#state#init() abort
     let s:state.ns_id = nvim_create_namespace("im_nvim")
   endif
 
+  let s:state.ascii_mode = im#rime#get_option('ascii_mode')
   let s:state.ascii_punct = im#rime#get_option('ascii_punct')
   let s:state.traditional = im#rime#get_option('traditionalization')
 endfunction

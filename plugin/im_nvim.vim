@@ -42,8 +42,5 @@ augroup im_lifecycle
   autocmd VimLeavePre * call im#rime#stop()
   autocmd User RimeIMEnable  call im#hooks#on_enable()
   autocmd User RimeIMDisable call im#hooks#on_disable()
-  " autocmd InsertEnter * call im#on_insert_enter()
-  " autocmd InsertLeave * call im#on_insert_leave()
 augroup END
-
 

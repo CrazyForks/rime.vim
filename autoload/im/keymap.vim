@@ -19,6 +19,8 @@ let s:keys = {
       \ 'c-u'     : [0x75,   s:kCtrlMask,  "\<c-u>"],
       \ 'c-f'     : [0x66,   s:kCtrlMask,  "\<c-f>"],
       \ 'c-b'     : [0x62,   s:kCtrlMask,  "\<c-b>"],
+      \ 'c-`'     : [0x60,   s:kCtrlMask,  "\<c-`>"],
+      \ 'f4'      : [0xffc1, 0,            "\<f4>"],
       \ }
 
 " key -> 回放字符串 反查表，由 s:keys 生成，
@@ -78,8 +80,8 @@ function! im#keymap#setup() abort"{{{
   lnoremap <expr> <s-tab>    im#keymap#special('s-tab')
   lnoremap <expr> <pagedown> im#keymap#special('pagedown')
   lnoremap <expr> <pageup>   im#keymap#special('pageup')
-  lnoremap <expr> <c-f>      im#keymap#special('c-f')
-  lnoremap <expr> <c-b>      im#keymap#special('c-b')
+  lnoremap <expr> <c-f>      im#keymap#special('pagedown')
+  lnoremap <expr> <c-b>      im#keymap#special('pageup')
 
   doautocmd User RimeKeymapSetup
 endfunction"}}}
@@ -106,6 +108,14 @@ function! im#keymap#char(char) abort"{{{
     call s:begin_composition()
   endif
   return "\<Cmd>call im#key(" . char2nr(a:char) . ", 0)\<CR>"
+endfunction"}}}
+
+function! im#keymap#special_ext(name) abort"{{{
+  let [code, mask, literal] = s:keys[a:name]
+  if !im#state#composing()
+    call s:begin_composition()
+  endif
+  return "\<Cmd>call im#key(" . code . ", " . mask . ")\<CR>"
 endfunction"}}}
 
 function! im#keymap#special(name) abort"{{{

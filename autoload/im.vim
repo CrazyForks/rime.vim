@@ -217,22 +217,18 @@ endfunction"}}}
 
 function! im#enable() abort"{{{
   let state = im#state#get()
-  if !state.started
-    return
-  endif
+  let &iminsert=1
+  let &imsearch=0
   call im#keymap#setup()
-  set keymap=
-  set iminsert=1
-  set imsearch=0
   let state.boundary = -1
   let state.enabled = 1
+  if mode() == "i" && &iminsert != 1
+    call feedkeys("\<c-^>", "n")
+  endif
 endfunction"}}}
 
 function! im#disable() abort"{{{
   let state = im#state#get()
-  if !state.started
-    return
-  endif
   call im#cancel()
   " let &keymap = s:save_keymap
   " let &iminsert = s:save_iminsert
@@ -257,7 +253,10 @@ function! im#start() abort"{{{
   call s:setup_im_autocmd()
   call s:vimrc_save()
   call s:vimrc_setup()
-  call im#enable()
+  if mode() == "i"
+    call im#enable()
+  endif
+
   echo '[IM] on'
   redrawstatus
   return
@@ -269,9 +268,8 @@ function! im#stop() abort"{{{
     return
   endif
   call s:clear_im_autocmd()
-  call s:vimrc_restore()
   call im#disable()
-  call im#rime#stop()
+  call s:vimrc_restore()
   let state.started = 0
   doautocmd User RimeIMDisable
   echo '[IM] off'
@@ -310,10 +308,14 @@ function! im#status() abort"{{{
   let icon_full = get(g:, 'im_status_full_text', '全')
   let icon_simplified = get(g:, 'im_status_simplified_text', '简')
   let icon_traditional = get(g:, 'im_status_traditional_text', '繁')
+  let icon_chinese = get(g:, 'im_status_chinese_text', '中')
+  let icon_english = get(g:, 'im_status_english_text', '英')
+
   let icon_lock = get(g:, 'im_status_lock_text', '!')
+  let mode = state.ascii_mode ? icon_english : icon_chinese
   let locked = state.locked ?  icon_lock : ""
   let punct = state.ascii_punct ? icon_half : icon_full
   let trad = state.traditional ? icon_traditional : icon_simplified
-  return state.started ? locked . "[" . icon . "]" . punct . '|' . trad  : ''
+  return state.started ? locked . "[" . icon . "]" . mode . '|' . punct . '|' . trad  : ''
 endfunction"}}}
 
