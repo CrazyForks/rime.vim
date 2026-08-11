@@ -3,6 +3,8 @@
 A Chinese input method (Rime / ㄓ) solution for Vim and Neovim, based on the
 [rime-ice](https://github.com/iDvelve/rime-ice) scheme.
 
+---
+
 ## Table of Contents
 
 - [Introduction](#introduction)
@@ -99,6 +101,13 @@ cmake -S . -B build
 cmake --build build
 ```
 
+Alternatively, use emake (edit the librime include / lib paths in `main.mak` if needed):
+
+```bash
+cd /path/to/rime.vim/cpp
+emake --ini=emake/darwin.ini main.mak
+```
+
 #### Linux
 
 Compile librime manually, then point at its header include path and dynamic
@@ -107,6 +116,13 @@ library lib path separately:
 ```bash
 cd /path/to/rime.vim/cpp
 clang++ -std=c++17 -I./3rd -I/path/to/librime/include -L/path/to/librime/lib -lstdc++ -lrime -o build/rime-query rime-query.cc
+```
+
+Alternatively, use emake (edit the librime include / lib paths in `main.mak` if needed):
+
+```bash
+cd /path/to/rime.vim/cpp
+emake --ini=emake/linux.ini main.mak
 ```
 
 #### Windows
@@ -121,6 +137,13 @@ cd /path/to/rime.vim/cpp
 clang++ -std=c++17 -I./3rd -I/path/to/librime/include -L/path/to/librime/lib -lstdc++ -lrime -o build/rime-query.exe rime-query.cc
 ```
 
+Alternatively, use emake (edit the librime include / lib paths in `main.mak` if needed):
+
+```bash
+cd /path/to/rime.vim/cpp
+emake --ini=emake/llm.ini main.mak
+```
+
 After building, add the generated `rime-query` to `PATH`.
 
 ---
@@ -128,6 +151,10 @@ After building, add the generated `rime-query` to `PATH`.
 ## Configuration
 
 ### Options
+
+> [!Tip]
+> Taking Rime-ice (rime-ice) as an example: if you already have Squirrel or
+> Weasel installed, create a new user data directory to avoid conflicts.
 
 These are common `g:` variables; all are optional (defaults apply). Set them in
 your vimrc **before** the plugin is loaded:
@@ -160,23 +187,25 @@ let g:im_deploy_timeout            = 60000
 " Statusline icon
 let g:im_status_text               = 'ㄓ'
 " Half-width punctuation status text
-let g:im_status_half_text          = '半'
+let g:im_status_half_text          = '$'
 " Full-width punctuation status text
-let g:im_status_full_text          = '全'
+let g:im_status_full_text          = '¥'
 " Simplified status text
 let g:im_status_simplified_text    = '简'
 " Traditional status text
 let g:im_status_traditional_text   = '繁'
+" Locked-indicator icon when the dictionary is held by another instance
+let g:im_status_locked_text        = '!'
 " Initial punctuation state (1 = half-width)
 let g:im_option_ascii_punct        = 0
 " Initial simplified/traditional state (1 = traditional)
-let g:im_option_traditional   = 0
+let g:im_option_traditional        = 0
 
 
 " Use in the command line
 function! IMCmdEdit()
     let cmdtype = getcmdtype()
-    if cmdtype != ':' && cmdtype != '/'
+    if cmdtype != ':' && cmdtype != '/' && cmdtype != '?'
         return ''
     endif
 
@@ -207,6 +236,23 @@ function! PassToTerm(text)
 endfunction
 command! -nargs=* PassToTerm :call PassToTerm(<q-args>)
 tnoremap ;; <c-\><c-n><cmd>call im#start()<cr>q:a:PassToTerm<space>
+
+
+" Open the scheme selection menu
+function RimeKeymapRemap()
+  lnoremap <expr> ;` im#keymap#toggle_scheme('c-`')
+endfunction
+
+function RimeKeymapClear()
+  lunmap ;`
+endfunction
+
+augroup RimeGroup
+  autocmd!
+  autocmd User RimeKeymapSetup call RimeKeymapRemap()
+  autocmd User RimeKeymapClear call RimeKeymapClear()
+augroup END
+
 ```
 
 Notes:
@@ -305,14 +351,15 @@ methods:
 | `<c-n>`      | Next candidate               |
 | `<pageup>`   | Previous page                |
 | `<pagedown>` | Next page                    |
-| `<->`        | Previous page                |
-| `<=>`        | Next page                    |
+| `-`          | Previous page                |
+| `=`          | Next page                    |
 | `<bs>`       | Delete one character         |
 | `<s-bs>`     | Delete one syllable          |
 | `<tab>`      | Next syllable end            |
 | `<s-tab>`    | Next syllable start          |
 | `<c-u>`      | Clear pinyin                 |
 | `<c-w>`      | Delete one syllable          |
+| `<c-d>`      | Delete a self-made word      |
 | `<c-a>`      | Move cursor to pinyin start  |
 | `<c-e>`      | Move cursor to pinyin end    |
 
@@ -547,6 +594,16 @@ augroup RimeGroup
 augroup END
 ```
 ![demo3](https://github.com/user-attachments/assets/093e5089-0b8c-4528-854f-5d4aee85328d)
+
+### Use in Replace mode
+
+The following feature is experimental.
+
+- Remap `r` to support half-width / full-width switching.
+
+```vim
+nnoremap r <Cmd>call im#keymap#r()<CR>
+```
 
 ### Complementary plugins
 

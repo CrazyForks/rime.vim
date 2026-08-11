@@ -241,6 +241,10 @@ function! s:parse_context(resp) abort"{{{
         \ 'accepted'   : get(a:resp, 'accepted', v:true),
         \ 'candidates' : items,
         \ 'committed'  : get(a:resp, 'committed', ''),
+        \ 'changed_options' : get(a:resp, 'changed_options', []),
+        \ 'schema_changed'  : get(a:resp, 'schema_changed', v:false),
+        \ 'schema_id'       : get(a:resp, 'schema_id', ''),
+        \ 'schema_name'     : get(a:resp, 'schema_name', ''),
         \ }
 endfunction"}}}
 
@@ -256,6 +260,10 @@ function! s:empty_context() abort"{{{
         \ 'accepted'   : v:false,
         \ 'candidates' : [],
         \ 'committed'  : '',
+        \ 'changed_options' : [],
+        \ 'schema_changed'  : v:false,
+        \ 'schema_id'       : '',
+        \ 'schema_name'     : '',
         \ }
 endfunction"}}}
 
@@ -330,7 +338,7 @@ endfunction"}}}
 function! im#rime#apply_initial_options() abort"{{{
   let state = im#state#get()
   if exists('g:im_option_ascii_mode')
-    let value = im#rime#set_option('ascii_punct', get(g:, 'im_option_ascii_mode', 0))
+    let value = im#rime#set_option('ascii_mode', get(g:, 'im_option_ascii_mode', 0))
   endif
 
   if exists('g:im_option_ascii_punct')
@@ -403,7 +411,7 @@ function! im#rime#toggle_emoji() abort"{{{
     echohl None
     return
   endif
-  let state.ascii_punct = value ? 1 : 0
+  let state.emoji = value ? 1 : 0
   redrawstatus
 endfunction"}}}
 
@@ -419,7 +427,7 @@ function! im#rime#toggle_full_shape() abort"{{{
     echohl None
     return
   endif
-  let state.traditional = value ? 1 : 0
+  let state.full_shape = value ? 1 : 0
   redrawstatus
 endfunction"}}}
 

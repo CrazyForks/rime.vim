@@ -203,9 +203,9 @@ let g:im_deploy_timeout            = 60000
 " 状态栏图标
 let g:im_status_text               = 'ㄓ'
 " 半角标点状态文本
-let g:im_status_half_text          = '半'
+let g:im_status_half_text          = '$'
 " 全角标点状态文本
-let g:im_status_full_text          = '全'
+let g:im_status_full_text          = '¥'
 " 简体状态文本
 let g:im_status_simplified_text    = '简'
 " 繁体状态文本
@@ -252,6 +252,23 @@ function! PassToTerm(text)
 endfunction
 command! -nargs=* PassToTerm :call PassToTerm(<q-args>)
 tnoremap ;; <c-\><c-n><cmd>call im#start()<cr>q:a:PassToTerm<space>
+
+
+" 打开方案选单
+function RimeKeymapRemap()
+  lnoremap <expr> ;` im#keymap#toggle_scheme('c-`')
+endfunction
+
+function RimeKeymapClear()
+  lunmap ;`
+endfunction
+
+augroup RimeGroup
+  autocmd!
+  autocmd User RimeKeymapSetup call RimeKeymapRemap()
+  autocmd User RimeKeymapClear call RimeKeymapClear()
+augroup END
+
 ```
 
 其中：
@@ -343,6 +360,7 @@ export RIME_SHARED_DATA_DIR="/usr/share/rime-data"
 | `<s-tab>`    | 下一个音节开头     |
 | `<c-u>`      | 清空拼音           |
 | `<c-w>`      | 删除一个音节       |
+| `<c-d>`      | 删除自造词         |
 | `<c-a>`      | 光标移动到拼音开头 |
 | `<c-e>`      | 光标移动到拼音结尾 |
 

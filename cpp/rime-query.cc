@@ -67,11 +67,56 @@ static volatile std::sig_atomic_t g_should_exit = 0;
 // 维护线程里写入；主线程只在 join_maintenance_thread() 返回后读取，无竞态。
 static std::string g_deploy_status;
 
+// option / schema 变化记录：由 notification handler 在 process_key() 内部
+// 同线程同步写入，key handler 在 process_key() 返回后读取，无竞态。
+// 每次 key 请求前由 clear_key_notifications() 清空。
+static std::vector<std::pair<std::string, bool>> g_changed_options;
+static bool g_schema_changed = false;
+static std::string g_schema_id;
+static std::string g_schema_name;
+
 static void on_notification(void *, RimeSessionId, const char *message_type,
                             const char *message_value) {// {{{
-    if (message_type && message_value && std::strcmp(message_type, "deploy") == 0) {
+    if (!message_type || !message_value)
+        return;
+    if (std::strcmp(message_type, "deploy") == 0) {
         g_deploy_status = message_value;
         spdlog::info("deploy notification: {}", message_value);
+    } else if (std::strcmp(message_type, "option") == 0) {
+        // 值形如 "ascii_mode"（开）或 "!ascii_mode"（关）。
+        std::string name = message_value;
+        bool on = name[0] != '!';
+        if (!on) name = name.substr(1);
+        g_changed_options.emplace_back(name, on);
+        spdlog::info("option notification: {}={}", name, on);
+    } else if (std::strcmp(message_type, "schema") == 0) {
+        // 值形如 "luna_pinyin/Luna Pinyin"：<schema_id>/<schema_name>。
+        std::string value = message_value;
+        auto slash = value.find('/');
+        g_schema_id   = value.substr(0, slash);
+        g_schema_name = slash == std::string::npos ? "" : value.substr(slash + 1);
+        g_schema_changed = true;
+        spdlog::info("schema notification: {}", message_value);
+    }
+}// }}}
+
+// 清空上一次 process_key() 留下的通知记录；每次请求前调用，防止
+// set_option 等同步发出的通知泄漏到下一次 key 响应的 changed_options 里。
+static void clear_key_notifications() {// {{{
+    g_changed_options.clear();
+    g_schema_changed = false;
+}// }}}
+
+// 把本次请求内捕获的 option / schema 变化写入响应。
+static void fill_notifications(json &resp) {// {{{
+    json opts = json::array();
+    for (auto &kv : g_changed_options)
+        opts.push_back({{"name", kv.first}, {"value", kv.second}});
+    resp["changed_options"] = opts;
+    resp["schema_changed"]  = g_schema_changed;
+    if (g_schema_changed) {
+        resp["schema_id"]   = g_schema_id;
+        resp["schema_name"] = g_schema_name;
     }
 }// }}}
 
@@ -163,6 +208,11 @@ static void fill_context(json &resp) {// {{{
     resp["has_more"]   = !ctx.menu.is_last_page;
     resp["composing"]  = !preedit.empty();
 
+    // 始终带上当前方案 id，让前端无需额外请求即可同步状态栏方案名。
+    char schema_buf[256] = {0};
+    if (api->get_current_schema(sid, schema_buf, sizeof(schema_buf)))
+        resp["schema_id"] = schema_buf;
+
     api->free_context(&ctx);
 }// }}}
 
@@ -188,6 +238,7 @@ static json handle_request(const json &req) {// {{{
       int keycode = req.value("keycode", 0);
       int mask    = req.value("mask", 0);
 
+      clear_key_notifications();
       RimeSessionId sid = get_session();
       Bool accepted = api->process_key(sid, keycode, mask);
 
@@ -195,17 +246,20 @@ static json handle_request(const json &req) {// {{{
       resp["accepted"]  = (bool)accepted;
       resp["committed"] = fetch_commit();
       fill_context(resp);
+      fill_notifications(resp);
       return resp;
     }
 
     if (type == "select") {
         int index = req.value("index", 0);
+        clear_key_notifications();
         RimeSessionId sid = get_session();
         api->select_candidate_on_current_page(sid, index);
 
         resp["ok"]        = true;
         resp["committed"] = fetch_commit();
         fill_context(resp);
+        fill_notifications(resp);
         return resp;
     }
 
@@ -268,6 +322,7 @@ static json handle_request(const json &req) {// {{{
             resp["error"] = "option is required";
             return resp;
         }
+        clear_key_notifications();
         RimeSessionId sid = get_session();
         if (!sid) {
             resp["ok"]    = false;
@@ -291,6 +346,7 @@ static json handle_request(const json &req) {// {{{
             resp["error"] = "option is required";
             return resp;
         }
+        clear_key_notifications();
         RimeSessionId sid = get_session();
         if (!sid) {
             resp["ok"]    = false;

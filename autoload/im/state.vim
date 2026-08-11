@@ -19,6 +19,7 @@ let s:state = {
       \ 'full_shape'      : 0,
       \ 'traditional'     : 0,
       \ 'locked'          : 0,
+      \ 'schema'          : '',
       \ 'ns_id'           : 0,
       \ 'mark_id'         : 0,
       \ 'match_id'        : 0,

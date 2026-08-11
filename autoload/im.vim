@@ -165,6 +165,8 @@ function! im#key(keycode, mask, ...) abort"{{{
 
   let fallback = a:0 ? a:1 : im#keymap#fallback(a:keycode, a:mask)
 
+  call im#apply_option_changes(ctx)
+
   " librime reject 上屏
   if !ctx.accepted
     let committed = get(ctx, 'committed', '')
@@ -213,6 +215,47 @@ function! im#cancel() abort"{{{
   call im#underline#clean()
   call im#rime#reset()
   call im#state#reset_input()
+endfunction"}}}
+
+function! im#apply_option_changes(ctx) abort"{{{
+  let state = im#state#get()
+  let opt_changed = v:false
+  let sch_changed = v:false
+
+  let field_map = {
+        \ 'ascii_mode'         : 'ascii_mode',
+        \ 'ascii_punct'        : 'ascii_punct',
+        \ 'traditionalization' : 'traditional',
+        \ 'emoji'              : 'emoji',
+        \ 'full_shape'         : 'full_shape',
+        \ }
+  for item in get(a:ctx, 'changed_options', [])
+    let field = get(field_map, get(item, 'name', ''), '')
+    if !empty(field) && get(state, field, -1) != (item.value ? 1 : 0)
+      let state[field] = item.value ? 1 : 0
+      let opt_changed = v:true
+    endif
+  endfor
+
+  let schema_id = get(a:ctx, 'schema_id', '')
+  let schema_dirty = v:false
+  if !empty(schema_id) && schema_id !=# state.schema
+    let state.schema = schema_id
+    let schema_dirty = v:true
+  endif
+  if get(a:ctx, 'schema_changed', v:false)
+    let sch_changed = v:true
+  endif
+
+  if opt_changed || schema_dirty
+    redrawstatus
+  endif
+  if opt_changed
+    doautocmd User RimeOptionChanged
+  endif
+  if sch_changed
+    doautocmd User RimeSchemaChanged
+  endif
 endfunction"}}}
 
 function! im#enable() abort"{{{
@@ -369,5 +412,9 @@ function! im#status() abort"{{{
   let punct = state.ascii_punct ? icon_half : icon_full
   let trad = state.traditional ? icon_traditional : icon_simplified
   return state.started ? locked . "[" . icon . "]" . mode . '|' . punct . '|' . trad  : ''
+endfunction"}}}
+
+function! im#schema() abort"{{{
+  return im#state#get().schema
 endfunction"}}}
 

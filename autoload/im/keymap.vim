@@ -17,6 +17,7 @@ let s:keys = {
       \ 'return'  : [0xff0d, 0,            "\<cr>"],
       \ 'space'   : [0x0020, 0,            "\<space>"],
       \ 'c-u'     : [0x75,   s:kCtrlMask,  "\<c-u>"],
+      \ 'c-d'     : [0xffff, s:kShiftMask, "\<c-d>"],
       \ 'c-f'     : [0x66,   s:kCtrlMask,  "\<c-f>"],
       \ 'c-b'     : [0x62,   s:kCtrlMask,  "\<c-b>"],
       \ 'c-`'     : [0x60,   s:kCtrlMask,  "\<c-`>"],
@@ -46,7 +47,7 @@ let s:mapped_keys = {
       \ 'symbols' : ['`','-','+','=','!','$','@','#','%','&','^','*','_','(',')','[',']','{','}','<','>','\','/','~',';',':',',','.','?',"'",'"'],
       \ 'numbers': ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
       \ 'specials': ['<bs>', '<s-bs>', '<left>', '<right>', '<up>', '<down>','<c-a>', '<c-e>', '<space>', '<cr>',
-      \ '<tab>', '<s-tab>', '<c-w>', '<c-u>', '<c-n>', '<c-p>', '<pagedown>', '<pageup>', '<c-f>', '<c-b>']
+      \ '<tab>', '<s-tab>', '<c-w>', '<c-u>', '<c-n>', '<c-p>', '<pagedown>', '<pageup>', '<c-f>', '<c-b>', '<c-d>']
       \ }
 
 function! im#keymap#setup() abort"{{{
@@ -66,6 +67,7 @@ function! im#keymap#setup() abort"{{{
   lnoremap <expr> <s-bs>     im#keymap#special('s-bs')
   lnoremap <expr> <c-u>      im#keymap#special('c-u')
   lnoremap <expr> <c-w>      im#keymap#special('s-bs')
+  lnoremap <expr> <c-d>      im#keymap#special('c-d')
   lnoremap <expr> <left>     im#keymap#special('left')
   lnoremap <expr> <right>    im#keymap#special('right')
   lnoremap <expr> <up>       im#keymap#special('up')
@@ -110,7 +112,7 @@ function! im#keymap#char(char) abort"{{{
   return "\<Cmd>call im#key(" . char2nr(a:char) . ", 0)\<CR>"
 endfunction"}}}
 
-function! im#keymap#special_ext(name) abort"{{{
+function! im#keymap#toggle_scheme(name) abort"{{{
   let [code, mask, literal] = s:keys[a:name]
   if !im#state#composing()
     call s:begin_composition()
