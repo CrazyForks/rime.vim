@@ -11,7 +11,7 @@
 
 <details>
 <summary>写在最前面</summary>
-  
+
 <br>
 对于常见的问题的统一回答。
 
@@ -22,7 +22,7 @@
   ```
 
 - 为什么词频功能会失效？
-  
+
   ```answer
   每个 Vim / Neovim 实例都会各自启动一个独立的 rime-query 后端进程，而所有实例共享同一个用户词库目录
   （`g:im_user_data_dir`）。用户词库（*.userdb 目录）是 LevelDB 单写者存储，同一时刻只允许一个进程
@@ -122,6 +122,13 @@ cmake -S . -B build
 cmake --build build
 ```
 
+或者使用 emake （必要时修改 `main.mak` 中的 librime include / lib 路径）：
+
+```bash
+cd /path/to/rime.vim/cpp
+emake --ini=emake/darwin.ini main.mak
+```
+
 #### Linux
 
 需手动编译 librime，并分别指定其头文件 include 路径与动态库 lib 路径：
@@ -129,6 +136,13 @@ cmake --build build
 ```bash
 cd /path/to/rime.vim/cpp
 clang++ -std=c++17 -I./3rd -I/path/to/librime/include -L/path/to/librime/lib -lstdc++ -lrime -o build/rime-query rime-query.cc
+```
+
+ 或者使用 emake （必要时修改 `main.mak` 中的 librime include / lib 路径）：
+
+```bash
+cd /path/to/rime.vim/cpp
+emake --ini=emake/linux.ini main.mak
 ```
 
 #### Windows
@@ -143,6 +157,13 @@ cd /path/to/rime.vim/cpp
 clang++ -std=c++17 -I./3rd -I/path/to/librime/include -L/path/to/librime/lib -lrime -o build/rime-query.exe rime-query.cc
 ```
 
+或者使用 emake （必要时修改 `main.mak` 中的 librime include / lib 路径）：
+
+```bash
+cd /path/to/rime.vim/cpp
+emake --ini=emake/llm.ini main.mak
+```
+
 构建完成后，请把生成的 `rime-query` 添加到 `PATH`。
 
 ## 配置
@@ -150,7 +171,7 @@ clang++ -std=c++17 -I./3rd -I/path/to/librime/include -L/path/to/librime/lib -lr
 ### 选项
 
 > [!Tip]
-> 以雾凇拼音（rime-ice） 为例，如果你系统中已安装了「鼠须管」或者「小狼毫」，用户数据目录可以新建一个，避免产生冲突。 
+> 以雾凇拼音（rime-ice） 为例，如果你系统中已安装了「鼠须管」或者「小狼毫」，用户数据目录可以新建一个，避免产生冲突。
 
 以下均为常用 `g:` 变量，可省略（使用默认值）。请在 vimrc 中、插件加载**之前**设置：
 
