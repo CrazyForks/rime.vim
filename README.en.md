@@ -155,6 +155,8 @@ let g:im_toggle_ascii_punct_key    = ';a'
 let g:im_toggle_traditional_key    = ';f'
 " Toggle emoji
 let g:im_toggle_emoji_key          = ';e'
+" Backend wait timeout for :IMDeploy / :IMSync (ms)
+let g:im_deploy_timeout            = 60000
 " Statusline icon
 let g:im_status_text               = 'ㄓ'
 " Half-width punctuation status text
@@ -258,6 +260,23 @@ export RIME_SHARED_DATA_DIR="/usr/share/rime-data"
 | `:IMStart` | Start the input method (and start the `rime-query` backend) |
 | `:IMStop`  | Stop the input method                              |
 | `:IMToggle`| Toggle the input method on/off                     |
+| `:IMDeploy`| Redeploy Rime (takes effect after editing config)  |
+| `:IMSync`  | Sync the user dictionary, then redeploy            |
+
+#### Redeploying
+
+After editing the configuration in your user data directory (e.g. `schema_list` /
+`page_size` in `default.custom.yaml`), run `:IMDeploy` to apply the changes. The
+editor briefly blocks during deployment; tune the timeout with
+`g:im_deploy_timeout` (ms).
+
+#### Syncing the user dictionary
+
+`:IMSync` first merges your user dictionary (`*.userdb/`) with the
+`sync/<installation_id>/*.userdb.txt` backups in both directions, then
+redeploys. This makes it easy to sync personal word frequency across devices
+and platforms; on multiple devices it is recommended to set the same
+`installation_id` in `installation.yaml`, otherwise the merge may fail.
 
 ### Key mappings
 

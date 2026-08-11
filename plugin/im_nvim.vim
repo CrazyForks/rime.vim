@@ -13,6 +13,8 @@ call im#rime#init()
 command! IMToggle             call im#toggle()
 command! IMStart              call im#start()
 command! IMStop               call im#stop()
+command! IMDeploy             call im#deploy()
+command! IMSync               call im#sync()
 
 
 if !get(g:, 'im_no_default_mappings', 0)

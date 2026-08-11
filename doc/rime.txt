@@ -182,6 +182,8 @@ your vimrc **before** the plugin is loaded:
     let g:im_toggle_traditional_key    = ';f'
     " Toggle emoji
     let g:im_toggle_emoji_key          = ';e'
+    " Backend wait timeout for :IMDeploy / :IMSync (ms)
+    let g:im_deploy_timeout            = 60000
     " Statusline icon
     let g:im_status_text               = 'ㄓ'
     " Half-width punctuation status text
@@ -292,6 +294,10 @@ COMMANDS ~
   :IMStop     Stop the input method
 
   :IMToggle   Toggle the input method on/off
+
+  :IMDeploy   Redeploy Rime (takes effect after editing config)
+
+  :IMSync     Sync the user dictionary, then redeploy
   ------------------------------------------------------------------------
 
 KEY MAPPINGS ~

@@ -287,6 +287,58 @@ function! im#toggle() abort"{{{
   return
 endfunction"}}}
 
+function! im#deploy() abort"{{{
+  let state = im#state#get()
+  if !state.started
+    echohl WarningMsg
+    echom '[IM] rime not started, run :IMStart first'
+    echohl None
+    return
+  endif
+  call im#cancel()
+  let status = im#rime#deploy()
+  if status ==# 'success'
+    echo '[IM] deploy success'
+  elseif status ==# 'failure'
+    echohl ErrorMsg
+    echom '[IM] deploy failed, check rime log'
+    echohl None
+  else
+    echohl WarningMsg
+    echom '[IM] deploy timed out or backend not responding'
+    echohl None
+  endif
+  call im#state#init()
+  redrawstatus
+  return
+endfunction"}}}
+
+function! im#sync() abort"{{{
+  let state = im#state#get()
+  if !state.started
+    echohl WarningMsg
+    echom '[IM] rime not started, run :IMStart first'
+    echohl None
+    return
+  endif
+  call im#cancel()
+  let status = im#rime#sync()
+  if status ==# 'success'
+    echo '[IM] sync + deploy success'
+  elseif status ==# 'failure'
+    echohl ErrorMsg
+    echom '[IM] sync or deploy failed, check rime log'
+    echohl None
+  else
+    echohl WarningMsg
+    echom '[IM] sync timed out or backend not responding'
+    echohl None
+  endif
+  call im#state#init()
+  redrawstatus
+  return
+endfunction"}}}
+
 function! im#on_insert_enter() abort"{{{
   let state = im#state#get()
   if state.started && !state.enabled

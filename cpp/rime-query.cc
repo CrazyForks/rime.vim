@@ -4,6 +4,7 @@
 
 #include <cstdlib>
 #include <csignal>
+#include <cstring>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -62,6 +63,18 @@ static void log_init() {// {{{
 static RimeSessionId g_session = 0;
 static volatile std::sig_atomic_t g_should_exit = 0;
 
+// 最近一次部署（maintenance）的状态，由 notification handler 在 librime 的
+// 维护线程里写入；主线程只在 join_maintenance_thread() 返回后读取，无竞态。
+static std::string g_deploy_status;
+
+static void on_notification(void *, RimeSessionId, const char *message_type,
+                            const char *message_value) {// {{{
+    if (message_type && message_value && std::strcmp(message_type, "deploy") == 0) {
+        g_deploy_status = message_value;
+        spdlog::info("deploy notification: {}", message_value);
+    }
+}// }}}
+
 static void on_signal(int) {
     g_should_exit = 1;
 }
@@ -79,6 +92,7 @@ static void rime_init(const char *shared_dir, const char *user_dir) {// {{{
     RimeApi *api = rime_get_api();
     api->setup(&traits);
     api->initialize(&traits);
+    api->set_notification_handler(on_notification, nullptr);
 
     if (api->start_maintenance(false)) {
         spdlog::info("deployment started, waiting for it to finish...");
@@ -199,6 +213,50 @@ static json handle_request(const json &req) {// {{{
         RimeSessionId sid = get_session();
         if (sid) api->clear_composition(sid);
         resp["ok"] = true;
+        return resp;
+    }
+
+    // --- deploy ---
+    // 等价于 Squirrel/Weasel 的「重新部署」：强制完整重建配置、方案与用户词库。
+    if (type == "deploy") {
+        if (g_session) {
+            api->destroy_session(g_session);
+            g_session = 0;
+        }
+        g_deploy_status.clear();
+        Bool started = api->start_maintenance(true);
+        if (!started) {
+            resp["ok"]             = false;
+            resp["error"]          = "maintenance already in progress";
+            resp["deploy_status"]  = g_deploy_status;
+            return resp;
+        }
+        api->join_maintenance_thread();
+        if (g_deploy_status.empty())
+            g_deploy_status = "success";  // 未收到失败通知即视为成功
+        resp["ok"]            = g_deploy_status == "success";
+        resp["deploy_status"] = g_deploy_status;
+        if (g_deploy_status != "success") {
+            resp["error"] = "deploy failed, check the rime log for details";
+        }
+        return resp;
+    }
+
+    // --- sync ---
+    // 双向同步用户词库：合并 sync/<installation_id>/schema.userdb.txt 备份。
+    // RimeSyncUserData 只是调度任务并异步启动 maintenance，必须 join 等它跑完，
+    // 否则 user_dict_sync（最后一步，负责导出 *.userdb.txt）会被打断。
+    if (type == "sync") {
+        g_deploy_status.clear();
+        api->sync_user_data();
+        api->join_maintenance_thread();
+        if (g_deploy_status.empty())
+            g_deploy_status = "success";  // 未收到失败通知即视为成功
+        resp["ok"]            = g_deploy_status == "success";
+        resp["deploy_status"] = g_deploy_status;
+        if (g_deploy_status != "success") {
+            resp["error"] = "sync failed, check the rime log for details";
+        }
         return resp;
     }
 

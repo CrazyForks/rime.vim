@@ -177,6 +177,8 @@ let g:im_toggle_ascii_punct_key    = ';a'
 let g:im_toggle_traditional_key    = ';f'
 " 切换 emoji
 let g:im_toggle_emoji_key          = ';e'
+" :IMDeploy / :IMSync 的后端等待超时（毫秒）
+let g:im_deploy_timeout            = 60000
 " 状态栏图标
 let g:im_status_text               = 'ㄓ'
 " 半角标点状态文本
@@ -276,6 +278,16 @@ export RIME_SHARED_DATA_DIR="/usr/share/rime-data"
 | `:IMStart`  | 启动输入法（并启动 `rime-query` 后端） |
 | `:IMStop`   | 停止输入法                             |
 | `:IMToggle` | 切换输入法开关                         |
+| `:IMDeploy` | 重新部署 Rime（改配置后生效）          |
+| `:IMSync`   | 同步用户词库并重新部署                 |
+
+#### 重新部署
+
+修改用户数据目录中的配置（如 `default.custom.yaml` 的 `schema_list` / `page_size`）后，执行 `:IMDeploy` 使改动生效。部署期间编辑器会短暂阻塞，超时可用 `g:im_deploy_timeout`（毫秒）调整。
+
+#### 同步词库
+
+`:IMSync` 先将用户词库（`*.userdb/`）与 `sync/<installation_id>/*.userdb.txt` 备份双向合并，再重新部署。便于跨设备、多平台同步个人词频；多台设备建议将 `installation.yaml` 中的 `installation_id` 设为同一值，否则可能合并失败。
 
 ### 按键映射
 

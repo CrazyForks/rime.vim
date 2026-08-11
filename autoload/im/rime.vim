@@ -307,6 +307,26 @@ function! im#rime#get_option(name) abort"{{{
   return get(resp, 'value', v:null)
 endfunction"}}}
 
+function! im#rime#deploy() abort"{{{
+  " 触发 librime 完整重新部署；同步阻塞，部署期间后端不响应其他请求。
+  " 返回 'success' / 'failure'；后端未响应返回 v:null。
+  let resp = im#rime#call({'type': 'deploy'}, get(g:, 'im_deploy_timeout', 60000))
+  if resp is v:null
+    return v:null
+  endif
+  return get(resp, 'deploy_status', '')
+endfunction"}}}
+
+function! im#rime#sync() abort"{{{
+  " 先同步用户词库（sync/<installation_id>/ 下的备份），再重新部署。
+  " 返回 deploy_status；后端未响应返回 v:null。
+  let resp = im#rime#call({'type': 'sync'}, get(g:, 'im_deploy_timeout', 60000))
+  if resp is v:null
+    return v:null
+  endif
+  return im#rime#deploy()
+endfunction"}}}
+
 function! im#rime#apply_initial_options() abort"{{{
   let state = im#state#get()
   if exists('g:im_option_ascii_mode')
